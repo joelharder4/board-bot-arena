@@ -1,0 +1,20 @@
+{
+  "name": "board-bot-arena-root",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joelharder4/board-bot-arena.git"
+  },
+  "author": "Joel Harder",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/joelharder4/board-bot-arena/issues"
+  },
+  "homepage": "https://github.com/joelharder4/board-bot-arena#readme"
+}
