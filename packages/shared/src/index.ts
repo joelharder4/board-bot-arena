@@ -1,3 +1,3 @@
 export * from './api-routes.ts';
-export * from './db-models.ts';
+export * from './schema.js';
 export * from './game-state.ts';

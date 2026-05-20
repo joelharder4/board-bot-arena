@@ -5,7 +5,7 @@
   "main": "src/index.ts",
   "scripts": {
     "dev": "npx tsx src/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "db-push": "drizzle-kit push"
   },
   "keywords": [],
   "author": "",
