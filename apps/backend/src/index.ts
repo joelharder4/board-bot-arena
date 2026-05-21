@@ -51,7 +51,7 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Engine is running' });
 });
 
-import matchRoutes from './routes/match.ts';
+import matchRoutes from './routes/matches.ts';
 app.use('/api/matches', matchRoutes);
 
 
