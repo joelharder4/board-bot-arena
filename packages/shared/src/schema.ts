@@ -1,8 +1,15 @@
 import { pgTable, pgEnum, serial, text, timestamp, integer, varchar, boolean, check, char, jsonb } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
+import { MatchStatus, UserRole } from './models.ts';
 
-export const rolesEnum = pgEnum("roles", ["user", "admin"]);
-export const matchStatusEnum = pgEnum("match_status", ["pending", "in-progress", "completed", "aborted"]);
+export const rolesEnum = pgEnum(
+  "roles",
+  Object.values(UserRole) as [string, ...string[]]
+);
+export const matchStatusEnum = pgEnum(
+  "match_status",
+  Object.values(MatchStatus) as [string, ...string[]]
+);
 
 const timestamps = {
   updatedAt: timestamp("updated_at"),
