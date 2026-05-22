@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import http from 'http';
 import { Server } from 'socket.io';
 import { config } from './env.ts';
@@ -8,6 +9,7 @@ const app = express();
 
 app.use(cors({ origin: 'http://localhost:5173' }));
 app.use(express.json());
+app.use(cookieParser());
 
 // We wrap the Express app in a standard Node HTTP server. 
 // Why? Because when you add WebSockets later, they attach to the HTTP server, not Express!

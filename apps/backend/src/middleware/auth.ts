@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { verify, type JwtPayload } from 'jsonwebtoken';
+import { verify } from 'jsonwebtoken';
 import { config } from '../env.ts';
 import type { UserRole } from '@board-bot-arena/shared';
 
@@ -25,7 +25,7 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction): vo
 
   try {
     const token = authHeader.split(' ')[1]!;
-    const payload = verify(token, config.JWT_SECRET) as { userId: number; role: UserRole };
+    const payload = verify(token, config.JWT_ACCESS_SECRET) as { userId: number; role: UserRole };
     req.user = payload;
     
     next();

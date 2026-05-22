@@ -5,8 +5,10 @@ dotenv.config();
 
 const envSchema = z.object({
   PORT: z.string().default("3000"),
+  NODE_ENV: z.string().default("development"),
   DATABASE_URL: z.url("Database URL must be valid"),
-  JWT_SECRET: z.string().min(10, "JWT Secret must be at least 10 characters long"),
+  JWT_ACCESS_SECRET: z.string().min(10, "JWT Secret must be at least 10 characters long"),
+  JWT_REFRESH_SECRET: z.string().min(10, "JWT Refresh Secret must be at least 10 characters long"),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

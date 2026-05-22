@@ -1,0 +1,109 @@
+import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
+
+let accessToken: string | null = null;
+
+export const setAccessToken = (token: string | null) => {
+  accessToken = token;
+};
+
+export const api = axios.create({
+  baseURL: 'http://localhost:3000/api',
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value?: unknown) => void;
+  reject: (reason?: unknown) => void;
+}> = [];
+
+
+const processQueue = (error: Error | null, token: string | null = null) => {
+  failedQueue.forEach((promise) => {
+    if (error) {
+      promise.reject(error);
+    } else {
+      promise.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+
+api.interceptors.request.use(
+  (config: InternalAxiosRequestConfig) => {
+    if (accessToken && config.headers) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
+    // requireAuth middleware returns 403 if the access token is invalid (needs refresh)
+    if (
+      !originalRequest ||
+      error.response?.status !== 403 ||
+      originalRequest._retry ||
+      originalRequest.url === '/auth/refresh'
+    ) {
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+
+    // if we are already refreshing
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        failedQueue.push({ resolve, reject });
+      })
+        .then((token) => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return api(originalRequest);
+        })
+        .catch((err) => Promise.reject(err));
+    }
+
+    // we are the first request to fail
+    originalRequest._retry = true;
+    isRefreshing = true;
+
+    try {
+      // get a new access token
+      const response = await axios.post(
+        '/api/auth/refresh',
+        {},
+        { withCredentials: true }
+      );
+
+      const newAccessToken = response.data.accessToken;
+      setAccessToken(newAccessToken);
+
+      processQueue(null, newAccessToken);
+
+      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+      return api(originalRequest);
+
+    } catch (refreshError) {
+      // we failed to refresh, just sign out
+      processQueue(refreshError as Error, null);
+      setAccessToken(null);
+      
+      // redirect to login page?
+      // window.location.href = '/login'; 
+      
+      return Promise.reject(refreshError);
+    } finally {
+      isRefreshing = false;
+    }
+  }
+);
