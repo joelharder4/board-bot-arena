@@ -21,10 +21,16 @@ const timestamps = {
 export const user = pgTable("user", {
   id: serial().primaryKey(),
   name: text().notNull(),
-  email: text().unique().notNull(),
-  hashedPassword: text().notNull(),
-  role: rolesEnum().default("user"),
-  ...timestamps,
+  email: text().unique(),
+  role: rolesEnum().default("user").notNull(),
+  passwordHash: text(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const session = pgTable("session", {
+  id: serial().primaryKey(),
+  userId: integer("user_id").references(() => user.id),
+  refreshToken: text(),
 });
 
 // e.g. 1, "Catan", "Strategy", 2, 4

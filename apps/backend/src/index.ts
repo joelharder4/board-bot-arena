@@ -2,12 +2,12 @@ import express from 'express';
 import cors from 'cors';
 import http from 'http';
 import { Server } from 'socket.io';
+import { config } from './env.ts';
 
 const app = express();
-const port = process.env.PORT || 3000;
 
-app.use(cors({ origin: 'http://localhost:5173' })); 
-app.use(express.json()); 
+app.use(cors({ origin: 'http://localhost:5173' }));
+app.use(express.json());
 
 // We wrap the Express app in a standard Node HTTP server. 
 // Why? Because when you add WebSockets later, they attach to the HTTP server, not Express!
@@ -46,19 +46,23 @@ io.on('connection', (socket) => {
 /////////////////
 // HTTP ROUTES //
 /////////////////
+import matchRoutes from './routes/matches.ts';
+import authRoutes from './routes/auth.ts';
+import { requireAuth, requireRoles } from './middleware/auth.ts';
+import { UserRole } from '@board-bot-arena/shared';
 
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Engine is running' });
 });
 
-import matchRoutes from './routes/matches.ts';
-app.use('/api/matches', matchRoutes);
+app.use('/api/matches', requireAuth, requireRoles([UserRole.USER, UserRole.ADMIN]), matchRoutes);
+app.use('/api/auth', authRoutes);
 
 
 /////////////////////
 // START LISTENING //
 /////////////////////
 
-server.listen(port, () => {
-    console.log(`Board Bot Arena Backend running at http://localhost:${port}`);
+server.listen(config.PORT, () => {
+    console.log(`Boardgame Bot Arena Backend running at http://localhost:${config.PORT}`);
 });

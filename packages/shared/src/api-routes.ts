@@ -1,19 +1,20 @@
 /* 
 Auth & Users
-POST /api/auth/register — Create account.
-POST /api/auth/login — Returns a JWT.
-GET /api/auth/me — Validates the JWT on page load and returns the user's profile.
+POST /api/auth/register - Create account.
+POST /api/auth/login - Returns a JWT.
+POST /api/auth/guest - Creates a temporary guest account
+GET /api/auth/me - Validates the JWT on page load and returns the user's profile.
 
 Bot Management
-POST /api/bots — Create a new bot profile. This will not have code attached to it yet
-GET /api/bots — List all bots (limit 20 or something).
-POST /api/bots/{botId}/upload — Upload the Python script for the bot. The server saves this to a secure directory for the Docker container to access later.
+POST /api/bots - Create a new bot profile. This will not have code attached to it yet
+GET /api/bots - List all bots (limit 20 or something).
+POST /api/bots/{botId}/upload - Upload the Python script for the bot. The server saves this to a secure directory for the Docker container to access later.
 
 Matchmaking & Lobbies
-POST /api/matches — Create a new match lobby (select the game, max players).
-GET /api/matches — List open lobbies looking for players.
-GET /api/mathhes/{matchId} — Get match details (including the current players joined).
-POST /api/matches/{matchId}/join — Join a lobby. The body specifies if the user is joining as themselves or entering one of their bots.
+POST /api/matches - Create a new match lobby (select the game, max players).
+GET /api/matches - List open lobbies looking for players.
+GET /api/mathhes/{matchId} - Get match details (including the current players joined).
+POST /api/matches/{matchId}/join - Join a lobby. The body specifies if the user is joining as themselves or entering one of their bots.
 
 Sockets C2S
 - join_room
@@ -30,7 +31,46 @@ Sockets S2C
 When a lobby starts, it creates a new match record and a match_player record for the host. It then opens a websocket
 */
 
+import { z } from 'zod';
 import type { Bot, LobbyPlayer, Match, MatchStatus } from "./models.ts";
+
+export interface ApiErrorResponse {
+  error: string;
+  details?: any;
+}
+
+
+
+// POST /api/auth/register
+export const createAccountSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  email: z.email("Please enter a valid email address"),
+  password: z.string().min(15, "Password must be at least 15 characters long")
+});
+export type CreateAccountRequest = z.infer<typeof createAccountSchema>;
+export interface CreateAccountResponse {
+  userId: number;
+  token: string;
+}
+
+// POST /api/auth/guest
+export interface CreateGuestRequest {}
+export interface CreateGuestResponse {
+  userId: number;
+  token: string;
+}
+
+// POST /api/auth/login
+export const logInSchema = z.object({
+  email: z.email("Please enter a valid email address"),
+  password: z.string(), // don't tell people the requirements
+});
+export type LogInRequest = z.infer<typeof logInSchema>;
+export interface LogInResponse {
+  userId: number;
+  token: string;
+}
+
 
 // POST /api/bots
 export interface CreateBotProfileRequest {
