@@ -76,6 +76,9 @@ export interface RefreshJWTResponse {
   token: string;
 }
 
+export interface LogOutRequest {}
+export interface LogOutResponse {}
+
 
 // POST /api/bots
 export interface CreateBotProfileRequest {

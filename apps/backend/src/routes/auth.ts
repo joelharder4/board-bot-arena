@@ -1,5 +1,5 @@
 import express, { type Request, type Response } from 'express';
-import { createAccountSchema, logInSchema, session, user, type ApiErrorResponse, type CreateAccountRequest, type CreateAccountResponse, type CreateGuestRequest, type CreateGuestResponse, type LogInRequest, type LogInResponse, type RefreshJWTRequest, type RefreshJWTResponse } from '@board-bot-arena/shared';
+import { createAccountSchema, logInSchema, session, user, UserRole, type ApiErrorResponse, type CreateAccountRequest, type CreateAccountResponse, type CreateGuestRequest, type CreateGuestResponse, type LogInRequest, type LogInResponse, type LogOutRequest, type LogOutResponse, type RefreshJWTRequest, type RefreshJWTResponse } from '@board-bot-arena/shared';
 import { db } from '../db/index.ts';
 import { and, eq } from 'drizzle-orm';
 import { hash } from 'bcrypt';
@@ -222,6 +222,33 @@ router.post('/refresh', async (
   } catch (error) {
     res.clearCookie('refreshToken');
     return res.status(403).json({ error: "Session expired. Please log in again." });
+  }
+});
+
+
+router.post('/logout', async (
+  req: Request<{}, any, LogOutRequest>,
+  res: Response<LogOutResponse | ApiErrorResponse>
+): Promise<any> => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+    if (refreshToken) {
+      const payload = verify(refreshToken, config.JWT_REFRESH_SECRET, {
+        ignoreExpiration: true
+      }) as { userId: number; role: UserRole };
+      
+      await db.delete(session).where(
+        and(
+          eq(session.refreshToken, refreshToken),
+          eq(session.userId, payload.userId)
+        )
+      );
+    }
+  } catch(e) {
+    console.error("Error in logout: ", e);
+  } finally {
+    res.clearCookie('refreshToken');
+    return res.status(200).json({});
   }
 });
 
