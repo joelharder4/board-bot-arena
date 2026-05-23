@@ -3,7 +3,7 @@ import { createAccountSchema, logInSchema, session, user, UserRole, type ApiErro
 import { db } from '../db/index.ts';
 import { and, eq } from 'drizzle-orm';
 import { hash } from 'bcrypt';
-import { sign, verify } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { config } from '../env.ts';
 import z from 'zod';
 
@@ -42,12 +42,12 @@ router.post('/register',
       if (!newUser) return res.status(500).json({ error: "Failed to create user account" });
 
       // JWT generation
-      const accessToken = sign(
+      const accessToken = jwt.sign(
         { userId: newUser.id },
         config.JWT_ACCESS_SECRET,
         { expiresIn: '1h' }
       );
-      const refreshToken = sign(
+      const refreshToken = jwt.sign(
         { userId: newUser.id },
         config.JWT_REFRESH_SECRET,
         { expiresIn: '14d' },
@@ -87,7 +87,7 @@ router.post('/guest', async (
     if (!newGuest) return res.status(500).json({ error: "Failed to create user account" });
 
     // JWT generation
-    const token = sign(
+    const token = jwt.sign(
         { userId: newGuest.id },
         config.JWT_ACCESS_SECRET,
         { expiresIn: '4h' }
@@ -124,12 +124,12 @@ router.post('/login', async (
     if (hashedPassword !== existingUser.passwordHash) return res.status(400).send();
 
     // JWT generation
-    const accessToken = sign(
+    const accessToken = jwt.sign(
       { userId: existingUser.id },
       config.JWT_ACCESS_SECRET,
       { expiresIn: '1h' }
     );
-    const refreshToken = sign(
+    const refreshToken = jwt.sign(
       { userId: existingUser.id },
       config.JWT_REFRESH_SECRET,
       { expiresIn: '14d' },
@@ -166,7 +166,7 @@ router.post('/refresh', async (
       return res.status(401).json({ error: "No refresh token found." });
     }
 
-    const payload = verify(refreshToken, config.JWT_REFRESH_SECRET) as {
+    const payload = jwt.verify(refreshToken, config.JWT_REFRESH_SECRET) as {
       userId: number;
       role: string;
     };
@@ -194,12 +194,12 @@ router.post('/refresh', async (
     await db.delete(session).where(and(eq(session.refreshToken, refreshToken), eq(session.userId, sessionData.userId)));
 
     // Issue new JWT tokens
-    const newAccessToken = sign(
+    const newAccessToken = jwt.sign(
       { userId: sessionData.userId, role: sessionData.role },
       config.JWT_ACCESS_SECRET,
       { expiresIn: '15m' },
     );
-    const newRefreshToken = sign(
+    const newRefreshToken = jwt.sign(
       { userId: sessionData.userId, role: sessionData.role },
       config.JWT_REFRESH_SECRET,
       { expiresIn: '14d' },
@@ -233,7 +233,7 @@ router.post('/logout', async (
   try {
     const refreshToken = req.cookies.refreshToken;
     if (refreshToken) {
-      const payload = verify(refreshToken, config.JWT_REFRESH_SECRET, {
+      const payload = jwt.verify(refreshToken, config.JWT_REFRESH_SECRET, {
         ignoreExpiration: true
       }) as { userId: number; role: UserRole };
       
