@@ -1,21 +1,27 @@
+import { ConfigProvider } from 'antd';
+import { StyleProvider } from '@ant-design/cssinjs';
+import { router } from './router';
+import { RouterProvider } from 'react-router';
+
 function App() {
 
   return (
-    <>
-      <div className="bg-surface p-6 rounded-lg shadow-sm border border-gray-100 flex flex-col gap-4">
-      
-      <div className="flex justify-between items-center text-foreground">
-        <h3 className="font-bold text-lg">Loser</h3>
-        <span className="text-sm font-medium">Win Rate: 6769%</span>
-      </div>
-
-      {/* 10% - Primary color reserved strictly for the Call to Action */}
-      <button className="bg-primary hover:bg-primary-dark text-surface font-semibold py-2 px-4 rounded transition-colors duration-200">
-        Run Match
-      </button>
-
-    </div>
-    </>
+    <StyleProvider layer>
+      <ConfigProvider
+        theme={{
+          token: {
+            colorPrimary: "#3D9A50",
+            // colorSuccess: "",
+            // colorWarning: "",
+            // colorError: "",
+            // colorInfo: "",
+            colorBgBase: "#F5FAF6",
+          },
+        }}
+      >
+        <RouterProvider router={router} />
+      </ConfigProvider>
+    </StyleProvider>
   );
 }
 

@@ -7,6 +7,10 @@
     "apps/*",
     "packages/*"
   ],
+  "nohoist": [
+    "**/react",
+    "**/react-dom"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/joelharder4/board-bot-arena.git"

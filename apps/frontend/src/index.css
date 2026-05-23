@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@layer tailwind-base, antd;
+
+@tailwind utilities;
+
 /* 
 colour theme
 #F5FAF6 - light grey/white/green
