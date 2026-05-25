@@ -16,6 +16,7 @@ function App() {
             // colorError: "",
             // colorInfo: "",
             colorBgBase: "#F5FAF6",
+            colorLink: "#55B569"
           },
         }}
       >

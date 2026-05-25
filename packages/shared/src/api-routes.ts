@@ -13,8 +13,8 @@ POST /api/bots/{botId}/upload - Upload the Python script for the bot. The server
 Matchmaking & Lobbies
 POST /api/matches - Create a new match lobby (select the game, max players).
 GET /api/matches - List open lobbies looking for players.
-GET /api/mathhes/{matchId} - Get match details (including the current players joined).
-POST /api/matches/{matchId}/join - Join a lobby. The body specifies if the user is joining as themselves or entering one of their bots.
+GET /api/matches/{matchId} - Get match details (including the current players joined).
+POST /api/matches/join - Join a lobby. The body specifies if the user is joining as themselves or entering one of their bots.
 
 Sockets C2S
 - join_room
@@ -43,9 +43,9 @@ export interface ApiErrorResponse {
 
 // POST /api/auth/register
 export const createAccountSchema = z.object({
-  username: z.string().min(1, "Username is required"),
-  email: z.email("Please enter a valid email address"),
-  password: z.string().min(15, "Password must be at least 15 characters long")
+  username: z.string("Please enter a username").min(1, "Username is required").max(32, "Username is too long"),
+  email: z.email("Please enter a valid email address").max(254, "Email is too long"),
+  password: z.string("Please enter a password").min(15, "Password must be at least 15 characters long").max(256, "You ain't remembering all that"),
 });
 export type CreateAccountRequest = z.infer<typeof createAccountSchema>;
 export interface CreateAccountResponse {
@@ -63,7 +63,7 @@ export interface CreateGuestResponse {
 // POST /api/auth/login
 export const logInSchema = z.object({
   email: z.email("Please enter a valid email address"),
-  password: z.string(), // don't tell people the requirements
+  password: z.string("Please enter a password"), // don't tell people the requirements
 });
 export type LogInRequest = z.infer<typeof logInSchema>;
 export interface LogInResponse {

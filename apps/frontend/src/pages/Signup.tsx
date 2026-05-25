@@ -2,32 +2,32 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Form, Input, Button, message, Breadcrumb } from 'antd';
 import { useAuthStore } from '../services/useAuthStore';
-import { type LogInRequest, type LogInResponse, logInSchema } from '@board-bot-arena/shared';
+import { type CreateAccountRequest, type CreateAccountResponse, createAccountSchema } from '@board-bot-arena/shared';
 import { api, setAccessToken } from '../services/api';
 import { zodRule } from '../utils/zodAdapter';
 
 const crumbItems = [
   { title: <Link to='/' className='text-gray-200'>Home</Link> },
-  { title: 'Log In' },
+  { title: 'Sign Up' },
 ];
 
-const Login: React.FC = () => {
+const Signup: React.FC = () => {
   const navigate = useNavigate();
   const setUserId = useAuthStore((state) => state.setUserId);
   const [isLoading, setIsLoading] = useState(false);
   
   const [form] = Form.useForm();
 
-  const onSubmit = async (values: LogInRequest) => {
+  const onSubmit = async (values: CreateAccountRequest) => {
     setIsLoading(true);
     try {
-      const validData = logInSchema.parse(values);
-      const res = await api.post<LogInResponse>('/auth/login', validData);
+      const validData = createAccountSchema.parse(values);
+      const res = await api.post<CreateAccountResponse>('/auth/signup', validData);
       setAccessToken(res.data.token);
       setUserId(res.data.userId);
       navigate('/');
     } catch {
-      message.error("Invalid email or password");
+      message.error("Something went wrong creating your account...");
     } finally {
       setIsLoading(false);
     }
@@ -38,7 +38,7 @@ const Login: React.FC = () => {
       <Breadcrumb items={crumbItems} className='absolute top-2 left-3'/>
       <div className="bg-background h-screen flex flex-col items-center justify-center">
         <div className="bg-surface max-w-96 w-[50vw] p-8 rounded-lg shadow-md border border-gray-200">
-          <h1 className="text-3xl font-bold text-center mb-6">Log in</h1>
+          <h1 className="text-3xl font-bold text-center mb-6">Sign Up</h1>
 
           <Form
             form={form}
@@ -46,23 +46,35 @@ const Login: React.FC = () => {
             onFinish={onSubmit}
           >
             <Form.Item
+              name="username"
+              label="Username"
+              tooltip="Username doesn't have to be unique"
+              rules={[zodRule(createAccountSchema.shape.username)]}
+              required
+            >
+              <Input placeholder="xXBotSlay3rXx" size='large' />
+            </Form.Item>
+
+            <Form.Item
               name="email"
               label="Email"
-              rules={[zodRule(logInSchema.shape.email)]}
+              rules={[zodRule(createAccountSchema.shape.email)]}
+              required
             >
-              <Input placeholder="" size='large' />
+              <Input placeholder="example@bot.com" size='large' />
             </Form.Item>
 
             <Form.Item
               name="password"
               label="Password"
-              rules={[zodRule(logInSchema.shape.password)]}
+              rules={[zodRule(createAccountSchema.shape.password)]}
+              required
             >
-              <Input.Password placeholder="" size='large' />
+              <Input.Password placeholder="•••••••••••••••" size='large' />
             </Form.Item>
 
-            <div className="w-full flex flex-row-reverse mb-2">
-              <Link to="/signup">Create an Account</Link>
+            <div className="w-full flex mb-2 justify-center gap-0.5 text-md">
+              Already have an account? <Link to="/login">Log in</Link>
             </div>
 
             <Button
@@ -72,7 +84,7 @@ const Login: React.FC = () => {
               disabled={isLoading}
               size='large'
             >
-              {isLoading ? 'Logging in...' : 'Log in'}
+              {isLoading ? 'Creating Account...' : 'Sign up'}
             </Button>
           </Form>
         </div>
@@ -81,4 +93,4 @@ const Login: React.FC = () => {
   );
 }
 
-export default Login;
+export default Signup;

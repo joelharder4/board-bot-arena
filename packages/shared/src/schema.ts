@@ -51,6 +51,7 @@ export const bot = pgTable("bot", {
 export const match = pgTable("match", {
   id: serial().primaryKey(),
   gameId: integer("game_id").references(() => game.id).notNull(),
+  botsOnly: boolean("bots_only").default(false).notNull(),
   numPlayers: integer("num_players").default(0).notNull(),
   status: matchStatusEnum().default("pending").notNull(),
   ...timestamps,
