@@ -1,5 +1,7 @@
+import type { RefreshJWTRequest, RefreshJWTResponse } from '@board-bot-arena/shared';
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 
+const BASE_URL = "http://localhost:3000/api";
 let accessToken: string | null = null;
 
 export const setAccessToken = (token: string | null) => {
@@ -7,7 +9,7 @@ export const setAccessToken = (token: string | null) => {
 };
 
 export const api = axios.create({
-  baseURL: 'http://localhost:3000/api',
+  baseURL: BASE_URL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -52,7 +54,7 @@ api.interceptors.response.use(
     // requireAuth middleware returns 403 if the access token is invalid (needs refresh)
     if (
       !originalRequest ||
-      error.response?.status !== 403 ||
+      (error.response?.status !== 403 && error.response?.status !== 401) ||
       originalRequest._retry ||
       originalRequest.url === '/auth/refresh'
     ) {
@@ -79,13 +81,14 @@ api.interceptors.response.use(
 
     try {
       // get a new access token
-      const response = await axios.post(
-        '/api/auth/refresh',
-        {},
+      const data: RefreshJWTRequest = {};
+      const response = await axios.post<RefreshJWTResponse>(
+        BASE_URL + '/auth/refresh',
+        data,
         { withCredentials: true }
       );
 
-      const newAccessToken = response.data.accessToken;
+      const newAccessToken = response.data.token;
       setAccessToken(newAccessToken);
 
       processQueue(null, newAccessToken);

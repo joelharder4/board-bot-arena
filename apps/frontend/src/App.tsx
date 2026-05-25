@@ -2,6 +2,7 @@ import { ConfigProvider } from 'antd';
 import { StyleProvider } from '@ant-design/cssinjs';
 import { router } from './router';
 import { RouterProvider } from 'react-router';
+import AuthInitializer from './providers/AuthInitializer';
 
 function App() {
 
@@ -20,7 +21,9 @@ function App() {
           },
         }}
       >
-        <RouterProvider router={router} />
+        <AuthInitializer>
+          <RouterProvider router={router} />
+        </AuthInitializer>
       </ConfigProvider>
     </StyleProvider>
   );

@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Form, Input, Button, message, Breadcrumb } from 'antd';
 import { useAuthStore } from '../services/useAuthStore';
-import { type CreateAccountRequest, type CreateAccountResponse, createAccountSchema } from '@board-bot-arena/shared';
+import { type ApiErrorResponse, type CreateAccountRequest, type CreateAccountResponse, createAccountSchema } from '@board-bot-arena/shared';
 import { api, setAccessToken } from '../services/api';
 import { zodRule } from '../utils/zodAdapter';
+import axios from 'axios';
 
 const crumbItems = [
   { title: <Link to='/' className='text-gray-200'>Home</Link> },
@@ -22,12 +23,24 @@ const Signup: React.FC = () => {
     setIsLoading(true);
     try {
       const validData = createAccountSchema.parse(values);
-      const res = await api.post<CreateAccountResponse>('/auth/signup', validData);
+      const res = await api.post<CreateAccountResponse>('/auth/register', validData, { withCredentials: true });
       setAccessToken(res.data.token);
       setUserId(res.data.userId);
       navigate('/');
-    } catch {
-      message.error("Something went wrong creating your account...");
+    } catch(e) {
+      if (axios.isAxiosError<ApiErrorResponse>(e)) {
+        const apiError = e.response?.data;
+        
+        if (apiError) {
+          console.error(apiError.error);
+          if (apiError.details) {
+            console.error("Validation details:\n", apiError.details);
+          }
+          message.error(apiError.error);
+        }
+      } else {
+        message.error("An unexpected error occurred");
+      }
     } finally {
       setIsLoading(false);
     }

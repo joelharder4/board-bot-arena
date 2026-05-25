@@ -32,7 +32,7 @@ When a lobby starts, it creates a new match record and a match_player record for
 */
 
 import { z } from 'zod';
-import type { Bot, LobbyPlayer, Match, MatchStatus } from "./models.ts";
+import type { Bot, LobbyPlayer, Match, MatchStatus, UserRole } from "./models.ts";
 
 export interface ApiErrorResponse {
   error: string;
@@ -74,6 +74,14 @@ export interface LogInResponse {
 export interface RefreshJWTRequest {}
 export interface RefreshJWTResponse {
   token: string;
+}
+
+export interface GetMeRequest {}
+export interface GetMeResponse {
+  userId: number;
+  username: string;
+  email: string;
+  role: string;
 }
 
 export interface LogOutRequest {}

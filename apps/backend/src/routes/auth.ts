@@ -1,17 +1,18 @@
 import express, { type Request, type Response } from 'express';
-import { createAccountSchema, logInSchema, session, user, UserRole, type ApiErrorResponse, type CreateAccountRequest, type CreateAccountResponse, type CreateGuestRequest, type CreateGuestResponse, type LogInRequest, type LogInResponse, type LogOutRequest, type LogOutResponse, type RefreshJWTRequest, type RefreshJWTResponse } from '@board-bot-arena/shared';
+import { createAccountSchema, logInSchema, session, user, UserRole, type ApiErrorResponse, type CreateAccountRequest, type CreateAccountResponse, type CreateGuestRequest, type CreateGuestResponse, type GetMeRequest, type GetMeResponse, type LogInRequest, type LogInResponse, type LogOutRequest, type LogOutResponse, type RefreshJWTRequest, type RefreshJWTResponse } from '@board-bot-arena/shared';
 import { db } from '../db/index.ts';
 import { and, eq } from 'drizzle-orm';
-import { hash } from 'bcrypt';
+import { compare, hash } from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { config } from '../env.ts';
 import z from 'zod';
+import { requireAuth } from '../middleware/auth.ts';
 
 const router = express.Router();
 
-router.post('/register', 
+router.post('/register',
   async (
-    req: Request<{}, any, CreateAccountRequest>, 
+    req: Request<{}, any, CreateAccountRequest>,
     res: Response<CreateAccountResponse | ApiErrorResponse>
   ) => {
     try {
@@ -118,10 +119,10 @@ router.post('/login', async (
     const { email, password } = result.data;
 
     const [existingUser] = await db.select().from(user).where(eq(user.email, email));
-    if (!existingUser) return res.status(400).send(); // intentionally provide no details
+    if (!existingUser || existingUser.role === UserRole.GUEST) return res.status(400).send();
 
-    const hashedPassword = await hash(password, 10);
-    if (hashedPassword !== existingUser.passwordHash) return res.status(400).send();
+    const match = compare(password, existingUser.passwordHash!);
+    if (!match) return res.status(400).send();
 
     // JWT generation
     const accessToken = jwt.sign(
@@ -217,13 +218,52 @@ router.post('/refresh', async (
       maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days in milliseconds
     });
 
-    return res.status(200).json({ token: newAccessToken });
+    return res.json({ token: newAccessToken });
 
   } catch (error) {
     res.clearCookie('refreshToken');
     return res.status(403).json({ error: "Session expired. Please log in again." });
   }
 });
+
+
+router.get(
+  '/me',
+  requireAuth,
+  async (req: Request<{}, any, GetMeRequest>, res: Response<GetMeResponse | ApiErrorResponse>): Promise<any> => {
+    try {
+      if (!req.user) {
+        res.status(401).json({ error: "User not authenticated" });
+        return;
+      }
+      const userId = req.user.userId;
+
+      const [currentUser] = await db
+        .select({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        })
+        .from(user)
+        .where(eq(user.id, userId));
+
+      if (!currentUser) {
+        return res.status(404).json({ error: "User profile not found." });
+      }
+
+      return res.json({
+        userId: currentUser.id,
+        username: currentUser.name,
+        email: currentUser.email ?? "",
+        role: currentUser.role,
+      });
+    } catch (e) {
+      console.error("Error fetching user profile:", e);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
 
 
 router.post('/logout', async (
