@@ -134,6 +134,7 @@ export interface MatchListParams {
   userId?: number; // filter lobby with specific person
   botId?: number;  // filter lobbies with a specific bot
   status?: MatchStatus;
+  count?: number;
 }
 export type MatchListResponse = Array<Match>;
 

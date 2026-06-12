@@ -23,8 +23,7 @@ const Navbar: React.FC = () => {
   }
 
   return (
-    <div className="w-full mt-0 h-min bg-surface flex flex-row">
-      
+    <div className="fixed w-full mt-0 h-min bg-surface flex flex-row border border-gray-200">
       <div className="ml-auto mr-4 pt-1 pb-1.5 flex flex-row gap-2">
         {isLoggedIn ? 
           <Button type="primary" onClick={onLogOut}>Log Out</Button> 
