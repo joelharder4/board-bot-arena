@@ -29,6 +29,7 @@ export enum MatchStatus {
 export interface Match {
   matchId: number;
   gameId: number;
+  gameTitle: string;
   numPlayers: number;
   maxPlayers: number;
   status: MatchStatus;

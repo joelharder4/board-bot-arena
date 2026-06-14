@@ -1,5 +1,5 @@
 import express, { type Request, type Response } from 'express';
-import { type MatchListParams, type MatchListResponse, type PlayMoveRequest, type PlayMoveResponse } from '@board-bot-arena/shared';
+import { MatchStatus, type MatchListParams, type MatchListResponse, type PlayMoveRequest, type PlayMoveResponse } from '@board-bot-arena/shared';
 
 const router = express.Router();
 
@@ -9,7 +9,15 @@ router.get('/', (
 ) => {
     const { gameId, userId, botId, status, count } = req.params;
 
-    res.json([]);
+    const example = {
+      matchId: 6,
+      gameId: 0,
+      gameTitle: "Catan",
+      numPlayers: 2,
+      maxPlayers: 4,
+      status: MatchStatus.PENDING
+    }
+    res.json([example, example, example]);
 });
 
 // The Express Request generic takes 4 arguments: Params, ResBody, ReqBody, Query
