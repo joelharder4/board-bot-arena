@@ -33,6 +33,9 @@ export interface Match {
   numPlayers: number;
   maxPlayers: number;
   status: MatchStatus;
+  createdAt: Date;
+  updatedAt?: Date;
+  deletedAt?: Date;
 }
 
 export type LobbyPlayer = User | Bot;

@@ -1,8 +1,11 @@
-import type { Match } from "@board-bot-arena/shared";
 import type React from "react";
+import { useState } from "react";
+import { type JoinMatchResponse, type Match } from "@board-bot-arena/shared";
 import { cn } from "../../utils/shadcn";
-import { Button } from "antd";
+import { Button, message } from "antd";
 import CatanLobbyImage from "../../assets/catan_lobby.png";
+import { api } from "../../services/api";
+import { useNavigate } from "react-router";
 
 interface props {
   lobby: Match;
@@ -11,7 +14,24 @@ interface props {
 };
 
 const LobbyCard: React.FC<props> = ({lobby, size, className}: props) => {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const navigate = useNavigate();
+
   const buttonSize = size === "large" ? "large" : "medium";
+
+  const onTryJoin = async () => {
+    setIsLoading(true);
+    try {
+      const res = await api.post<JoinMatchResponse>('/matches/join', { matchId: lobby.matchId });
+      // const playerSlot = res.data.playerSlot;
+      if (!res.data.matchId) throw new Error("Did not receive matchId from the server");
+      navigate(`/lobby/${res.data.matchId}`);
+    } catch {
+      message.error("Failed to join lobby");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className={cn("flex flex-col h-full bg-gray-50 border rounded-lg overflow-hidden", className)}>
@@ -35,11 +55,11 @@ const LobbyCard: React.FC<props> = ({lobby, size, className}: props) => {
           className="rounded-t-none"
           style={{borderTopLeftRadius: "0px", borderTopRightRadius: "0px"}}
           block
-          // disabled={isLoading}
+          disabled={isLoading}
           size={buttonSize}
+          onClick={onTryJoin}
         >
-          {/* {isLoading ? 'Logging in...' : 'Log in'} */}
-          Join
+          {isLoading ? 'Joining...' : 'Join'}
         </Button>
       </div>
     </div>
