@@ -1,5 +1,6 @@
 import type { RefreshJWTRequest, RefreshJWTResponse } from '@board-bot-arena/shared';
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
+import { useAuthStore } from './useAuthStore';
 
 const BASE_URL = "http://localhost:3000/api";
 let accessToken: string | null = null;
@@ -7,6 +8,8 @@ let accessToken: string | null = null;
 export const setAccessToken = (token: string | null) => {
   accessToken = token;
 };
+
+export const getAccessToken = () => accessToken;
 
 export const api = axios.create({
   baseURL: BASE_URL,
@@ -21,6 +24,27 @@ let failedQueue: Array<{
   resolve: (value?: unknown) => void;
   reject: (reason?: unknown) => void;
 }> = [];
+
+
+export const refreshAccessToken = async (): Promise<string> => {
+  try {
+    const data: RefreshJWTRequest = {};
+    const response = await axios.post<RefreshJWTResponse>(
+      BASE_URL + '/auth/refresh',
+      data,
+      { withCredentials: true }
+    );
+
+    const newAccessToken = response.data.token;
+    setAccessToken(newAccessToken);
+    return newAccessToken;
+    
+  } catch (e) {
+    setAccessToken(null);
+    useAuthStore.getState().clearAuth();
+    throw e;
+  }
+}
 
 
 const processQueue = (error: Error | null, token: string | null = null) => {
@@ -80,16 +104,7 @@ api.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      // get a new access token
-      const data: RefreshJWTRequest = {};
-      const response = await axios.post<RefreshJWTResponse>(
-        BASE_URL + '/auth/refresh',
-        data,
-        { withCredentials: true }
-      );
-
-      const newAccessToken = response.data.token;
-      setAccessToken(newAccessToken);
+      const newAccessToken = await refreshAccessToken();
 
       processQueue(null, newAccessToken);
 
@@ -99,7 +114,6 @@ api.interceptors.response.use(
     } catch (refreshError) {
       // we failed to refresh, just sign out
       processQueue(refreshError as Error, null);
-      setAccessToken(null);
       
       // redirect to login page?
       // window.location.href = '/login'; 

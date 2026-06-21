@@ -59,7 +59,9 @@ const LobbyCard: React.FC<props> = ({lobby, size, className}: props) => {
           size={buttonSize}
           onClick={onTryJoin}
         >
-          {isLoading ? 'Joining...' : 'Join'}
+          <span className="min-w-20">
+            {isLoading ? 'Joining...' : 'Join'}
+          </span>
         </Button>
       </div>
     </div>

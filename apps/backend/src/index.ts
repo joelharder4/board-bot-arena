@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import http from 'http';
 import { Server } from 'socket.io';
 import { config } from './env.ts';
+import { setupSocketHandlers } from './sockets/index.ts';
 
 const app = express();
 
@@ -27,22 +28,7 @@ const io = new Server(server, {
     }
 });
 
-
-io.on('connection', (socket) => {
-    console.log(`New client connected: ${socket.id}`);
-
-    // Example: A user joins a specific match room
-    socket.on('join_match', (matchId) => {
-        socket.join(`match_${matchId}`);
-        console.log(`User ${socket.id} joined match_${matchId}`);
-        
-        socket.to(`match_${matchId}`).emit('notification', 'A new player joined!');
-    });
-
-    socket.on('disconnect', () => {
-        console.log(`Client disconnected: ${socket.id}`);
-    });
-});
+setupSocketHandlers(io);
 
 
 /////////////////

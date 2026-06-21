@@ -1,7 +1,5 @@
 import express, { type Request, type Response } from 'express';
 import { game, match, matchPlayer, MatchStatus, type ApiErrorResponse, type JoinMatchRequest, type JoinMatchResponse, type Match, type MatchListParams, type MatchListResponse, type PlayMoveRequest, type PlayMoveResponse } from '@board-bot-arena/shared';
-import jwt from 'jsonwebtoken';
-import { config } from '../env.ts';
 import { db } from '../db/index.ts';
 import { eq } from 'drizzle-orm';
 
@@ -80,7 +78,7 @@ router.post('/join', async (
 
 // The Express Request generic takes 4 arguments: Params, ResBody, ReqBody, Query
 router.post('/move', (
-    req: Request<{}, any, PlayMoveRequest>, 
+    req: Request<{}, any, PlayMoveRequest>,
     res: Response<PlayMoveResponse>
 ) => {
     const { matchId, action, targetX, targetY } = req.body;

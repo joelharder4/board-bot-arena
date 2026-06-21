@@ -54,6 +54,7 @@ export const match = pgTable("match", {
   botsOnly: boolean("bots_only").default(false).notNull(),
   numPlayers: integer("num_players").default(0).notNull(),
   status: matchStatusEnum().default("pending").notNull(),
+  joinCode: varchar({ length: 6 }),
   ...timestamps,
 });
 

@@ -4,6 +4,8 @@ import Navbar from "../components/Navbar";
 import { MatchStatus, type Match } from "@board-bot-arena/shared";
 import Skeleton from "../components/ui/Skeleton";
 import LobbyCard from "../components/ui/LobbyCard";
+import { Button } from "antd";
+import { HappyProvider } from '@ant-design/happy-work-theme';
 
 const Home: React.FC = () => {
   const [matches, setMatches] = useState<Array<Match>>([]);
@@ -40,6 +42,27 @@ const Home: React.FC = () => {
           loser
         </>
         }
+        </div>
+        
+        <div className="flex flex-row max-w-2xl w-[60vw] m-2 gap-2">
+          <HappyProvider>
+            <Button
+              type="default"
+              block
+              size="large"
+              // onClick={on}
+            >
+              Create Lobby
+            </Button>
+            <Button
+              type="default"
+              block
+              size="large"
+              // onClick={onOpenJoinCode}
+            >
+              Join Lobby
+            </Button>
+          </HappyProvider>
         </div>
       </div>
     </>
