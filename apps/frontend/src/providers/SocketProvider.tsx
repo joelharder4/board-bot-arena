@@ -1,14 +1,8 @@
-import React, { createContext, useEffect, useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
+import { SocketContext } from "./useSocket";
 import { Socket, io } from "socket.io-client";
 import { useMatchStore } from "../services/useMatchStore";
 import { getAccessToken, refreshAccessToken } from "../services/api";
-
-interface SocketContextType {
-  socket: Socket | null;
-  isConnected: boolean;
-}
-
-const SocketContext = createContext<SocketContextType>({socket: null, isConnected: false});
 
 export const SocketProvider = ({children}: {children: React.ReactNode}) => {
   const socketRef = useRef<Socket | null>(null);

@@ -6,6 +6,7 @@ import { Button, message } from "antd";
 import CatanLobbyImage from "../../assets/catan_lobby.png";
 import { api } from "../../services/api";
 import { useNavigate } from "react-router";
+import { useMatchStore } from "../../services/useMatchStore";
 
 interface props {
   lobby: Match;
@@ -15,6 +16,9 @@ interface props {
 
 const LobbyCard: React.FC<props> = ({lobby, size, className}: props) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const setMatchId = useMatchStore((state) => state.setMatchId);
+  const setPlayerId = useMatchStore((state) => state.setPlayerId);
+  const clearMatch = useMatchStore((state) => state.clearMatch);
   const navigate = useNavigate();
 
   const buttonSize = size === "large" ? "large" : "medium";
@@ -25,8 +29,11 @@ const LobbyCard: React.FC<props> = ({lobby, size, className}: props) => {
       const res = await api.post<JoinMatchResponse>('/matches/join', { matchId: lobby.matchId });
       // const playerSlot = res.data.playerSlot;
       if (!res.data.matchId) throw new Error("Did not receive matchId from the server");
+      setMatchId(res.data.matchId);
+      setPlayerId(res.data.playerId);
       navigate(`/lobby/${res.data.matchId}`);
     } catch {
+      clearMatch();
       message.error("Failed to join lobby");
     } finally {
       setIsLoading(false);

@@ -155,6 +155,7 @@ export interface JoinMatchRequest {
 }
 export interface JoinMatchResponse {
   matchId: number;
+  playerId: number;
   playerSlot: number;
 }
 
