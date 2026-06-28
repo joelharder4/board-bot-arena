@@ -1,7 +1,7 @@
 import express, { type Request, type Response } from 'express';
 import { game, match, matchPlayer, MatchStatus, type ApiErrorResponse, type CreateMatchRequest, type CreateMatchResponse, type JoinMatchRequest, type JoinMatchResponse, type Match, type MatchListParams, type MatchListResponse, type PlayMoveRequest, type PlayMoveResponse } from '@board-bot-arena/shared';
 import { db } from '../db/index.ts';
-import { eq } from 'drizzle-orm';
+import { eq, SQL } from 'drizzle-orm';
 import { generateJoinCode } from '../utils/genCodes.ts';
 
 const router = express.Router();
@@ -45,12 +45,11 @@ router.post('/create', async (
     }).returning();
     if (!dbMatch) return res.status(500).json({ error: "Failed to create match" });
 
-    // insert matchPlayer entry
     const [dbMatchPlayer] = await db.insert(matchPlayer).values({
       matchId: dbMatch.id,
       userId,
       // colour: "#000000",
-      state: {},
+      state: {}, // NOTE: this should probably be a default from schema
     }).returning();
     if (!dbMatchPlayer) {
       await db.delete(match).where(eq(match.id, dbMatch.id));
@@ -81,20 +80,22 @@ router.post('/join', async (
     const userId = req.user.userId;
 
     const { matchId, joinCode } = req.body;
-    if (!matchId && !joinCode) {
+
+    let dbMatch;
+    let whereClause: SQL;
+
+    if (matchId) {
+      whereClause = eq(match.id, matchId);
+    } else if (joinCode) {
+      whereClause = eq(match.joinCode, joinCode);
+    } else {
       return res.status(400).json({ error: "did not provide a match id or join code" });
     }
 
-    let dbMatch;
-
-    if (matchId) {
-      [dbMatch] = await db.select().from(match).leftJoin(game, eq(game.id, match.gameId)).where(eq(match.id, matchId));
+    [dbMatch] = await db.select().from(match).leftJoin(game, eq(game.id, match.gameId)).where(whereClause);
       if (!dbMatch || !dbMatch.game || !dbMatch.match) {
         return res.status(404).json({ error: "Match not found" });
       }
-    } else {
-      // TODO: JOIN CODES
-    }
 
     if (dbMatch?.match.botsOnly) return res.status(401).json({ error: "Lobby is for bots only" });
     if (dbMatch?.match.status == MatchStatus.ABORTED) {
