@@ -118,13 +118,15 @@ export interface UploadBotCodeResponse {
 
 
 // POST /api/matches
-export interface CreateLobbyRequest {
+export interface CreateMatchRequest {
   // host is determined by auth
   gameId: number;
   private: boolean;
+  botsOnly?: boolean;
 }
-export interface CreateLobbyResponse {
+export interface CreateMatchResponse {
   matchId: number;
+  playerId: number;
   joinCode: string;
 }
 

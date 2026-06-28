@@ -1,7 +1,8 @@
 import express, { type Request, type Response } from 'express';
-import { game, match, matchPlayer, MatchStatus, type ApiErrorResponse, type JoinMatchRequest, type JoinMatchResponse, type Match, type MatchListParams, type MatchListResponse, type PlayMoveRequest, type PlayMoveResponse } from '@board-bot-arena/shared';
+import { game, match, matchPlayer, MatchStatus, type ApiErrorResponse, type CreateMatchRequest, type CreateMatchResponse, type JoinMatchRequest, type JoinMatchResponse, type Match, type MatchListParams, type MatchListResponse, type PlayMoveRequest, type PlayMoveResponse } from '@board-bot-arena/shared';
 import { db } from '../db/index.ts';
 import { eq } from 'drizzle-orm';
+import { generateJoinCode } from '../utils/genCodes.ts';
 
 const router = express.Router();
 
@@ -24,6 +25,50 @@ router.get('/', (
 });
 
 
+router.post('/create', async (
+  req: Request<{}, any, CreateMatchRequest>,
+  res: Response<CreateMatchResponse | ApiErrorResponse>,
+): Promise<any> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: "User not authenticated" });
+      return;
+    }
+    const userId = req.user.userId;
+    const joinCode = generateJoinCode();
+
+    const [dbMatch] = await db.insert(match).values({
+      gameId: req.body.gameId,
+      botsOnly: req.body.botsOnly,
+      numPlayers: 1,
+      joinCode,
+    }).returning();
+    if (!dbMatch) return res.status(500).json({ error: "Failed to create match" });
+
+    // insert matchPlayer entry
+    const [dbMatchPlayer] = await db.insert(matchPlayer).values({
+      matchId: dbMatch.id,
+      userId,
+      // colour: "#000000",
+      state: {},
+    }).returning();
+    if (!dbMatchPlayer) {
+      await db.delete(match).where(eq(match.id, dbMatch.id));
+      return res.status(500).json({ error: "Failed to add player to match" });
+    }
+
+    return res.json({
+      matchId: dbMatch.id,
+      playerId: dbMatchPlayer.id,
+      joinCode
+    });
+  } catch(e) {
+    console.error("Creating lobby error:", e);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
 router.post('/join', async (
     req: Request<{}, any, JoinMatchRequest>,
     res: Response<JoinMatchResponse | ApiErrorResponse>,
@@ -37,7 +82,7 @@ router.post('/join', async (
 
     const { matchId, joinCode } = req.body;
     if (!matchId && !joinCode) {
-      return res.status(400).json({ error: "did not provide a match id or join code" })
+      return res.status(400).json({ error: "did not provide a match id or join code" });
     }
 
     let dbMatch;
@@ -61,14 +106,20 @@ router.post('/join', async (
       return res.status(404).json({ error: "Match deleted" });
     }
 
-    await db.insert(matchPlayer).values({
+    const [dbMatchPlayer] = await db.insert(matchPlayer).values({
       matchId: dbMatch.match.id,
       userId: userId,
       colour: "#676767", // TODO: ASSIGN COLOURS
-    });
+    }).returning();
+    if (!dbMatchPlayer) return res.status(500).json({ error: "Failed to join match" });
 
     await db.update(match).set({ numPlayers: dbMatch.match.numPlayers + 1 });
 
+    return res.json({
+      matchId: dbMatch.match.id,
+      playerId: dbMatchPlayer.id,
+      playerSlot: dbMatch.match.numPlayers + 1,
+    });
   } catch(e) {
     console.error("Joining lobby error:", e);
     return res.status(500).json({ error: "Internal server error" });
