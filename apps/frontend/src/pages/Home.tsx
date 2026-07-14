@@ -4,7 +4,7 @@ import Navbar from "../components/Navbar";
 import { MatchStatus, type CreateMatchRequest, type CreateMatchResponse, type Match } from "@board-bot-arena/shared";
 import Skeleton from "../components/ui/Skeleton";
 import LobbyCard from "../components/ui/LobbyCard";
-import { Button, message } from "antd";
+import { Button, ConfigProvider, Input, message, Radio } from "antd";
 import { useNavigate } from "react-router";
 import { api } from "../services/api";
 import { useMatchStore } from "../services/useMatchStore";
@@ -58,51 +58,93 @@ const Home: React.FC = () => {
 
   return (
     <>
-      <Navbar/>
-      <div className="bg-background h-screen flex flex-col items-center justify-center">
-        <div className="bg-surface max-w-2xl w-[60vw] max-h-96 h-[40vw] md:p-6 p-4 rounded-lg shadow-md border border-gray-200 flex flex-row gap-4 items-stretch">
-        { isFetching || matches.length >= 1 ? <>
-          { isFetching ? <Skeleton className="grow-2 h-full"/> : <LobbyCard lobby={matches[0]} className="grow-2" size="large"/> }
-          { matches.length >= 3 && <div className="flex flex-col min-h-30vh h-full grow gap-2">
-            { isFetching ? <Skeleton className="w-full h-full"/> : <LobbyCard lobby={matches[1]} className="h-1/2 w-full grow"/> }
-            { isFetching ? <Skeleton className="w-full h-full"/> : <LobbyCard lobby={matches[2]} className="h-1/2 w-full grow"/> }
-          </div> }
-        </> : <>
-          no lobbies lmao
-        </>
-        }
-        </div>
-        
-        <div className="flex flex-row max-w-2xl w-[60vw] m-2">
-          <Button
-            type="primary"
-            size="large"
-            onClick={() => setIsPrivate(!isPrivate)}
-            disabled={isLoading}
-            className="w-20"
-            style={{borderBottomRightRadius: "0px", borderTopRightRadius: "0px"}}
-          >
-            {isPrivate ? "Private" : "Public"}
-          </Button>
-          <Button
-            type="default"
-            size="large"
-            onClick={() => onCreateMatch(isPrivate)}
-            disabled={isLoading}
-            className="grow-3"
-            style={{borderBottomLeftRadius: "0px", borderTopLeftRadius: "0px"}}
-          >
-            Create Lobby
-          </Button>
-          <Button
-            type="default"
-            size="large"
-            // onClick={onOpenJoinCode}
-            disabled={isLoading}
-            className="grow-3 ml-2"
-          >
-            Join Lobby
-          </Button>
+      <Navbar />
+      <div className="bg-background min-h-screen flex flex-col items-center justify-center pt-16 lg:pt-0">
+        <div className="max-w-6xl w-fit mx-auto space-y-6">
+          <div className="flex flex-row max-w-5xl w-[70vw] p-2 gap-2 bg-surface rounded-lg shadow-md border border-gray-200">
+            <ConfigProvider
+              theme={{
+                components: {
+                  Radio: {
+                    colorPrimary: '#999999',
+                    colorPrimaryHover: '#7a7a7a',
+                    colorPrimaryActive: '#545454',
+                  },
+                },
+              }}
+            >
+              <Radio.Group 
+                block
+                options={[
+                  { label: 'Public', value: 'public' },
+                  { label: 'Private', value: 'private' },
+                ]}
+                defaultValue="public"
+                optionType="button"
+                buttonStyle="solid"
+                disabled={isLoading}
+                onChange={(e) => setIsPrivate(e.target.value === 'private')}
+                className="self-center"
+              />
+            </ConfigProvider>
+            <Button
+              type="primary"
+              onClick={() => onCreateMatch(isPrivate)}
+              disabled={isLoading}
+            >
+              Create Lobby
+            </Button>
+
+            <div className="w-64 ml-auto flex flex-row gap-2">
+              <ConfigProvider
+                theme={{
+                  components: {
+                    Button: {
+                      colorPrimary: '#333333',
+                      colorPrimaryHover: '#7a7a7a',
+                      colorPrimaryActive: '#545454',
+                    },
+                  },
+                }}
+              >
+                <Input
+                  placeholder="Enter Join Code..."
+                />
+                <Button
+                  type="primary"
+                  // onClick={onOpenJoinCode}
+                  disabled={isLoading}
+                >
+                  Join Match
+                </Button>
+              </ConfigProvider>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 auto-rows-[240px]">
+            <div className="col-span-1 row-span-1 lg:col-span-2 lg:row-span-2">
+              <LobbyCard lobby={matches[0]}/>
+            </div>
+            <div className="col-span-1 row-span-1">
+              <LobbyCard lobby={matches[1]}/>
+            </div>
+            <div className="col-span-1 row-span-1">
+              <LobbyCard lobby={matches[2]}/>
+            </div>
+          </div>
+          
+          {/* <div className="max-w-2xl w-[60vw] max-h-96 h-[40vw] flex flex-row gap-4 items-stretch">
+            { isFetching || matches.length >= 1 ? <>
+              { isFetching ? <Skeleton className="grow-2 h-full"/> : <LobbyCard lobby={matches[0]} className="grow-2" size="large"/> }
+              { matches.length >= 3 && <div className="flex flex-col min-h-30vh h-full grow gap-2">
+                { isFetching ? <Skeleton className="w-full h-full"/> : <LobbyCard lobby={matches[1]} className="h-1/2 w-full grow"/> }
+                { isFetching ? <Skeleton className="w-full h-full"/> : <LobbyCard lobby={matches[2]} className="h-1/2 w-full grow"/> }
+              </div> }
+            </> : <>
+              no lobbies lmao
+            </>
+            }
+          </div> */}
         </div>
       </div>
     </>
