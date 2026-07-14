@@ -8,9 +8,30 @@ import { api } from "../../services/api";
 import { useNavigate } from "react-router";
 import { useMatchStore } from "../../services/useMatchStore";
 
+const styleVariants = {
+  large: {
+    containerRadius: "rounded-2xl",
+    imageArea: "p-6 pt-16",         // More padding, taller gradient fade
+    badge: "px-3 py-1.5 text-sm",   // Bigger badge
+    title: "text-2xl font-bold",   // Heavier, larger font
+    footerArea: "p-4",              // Generous whitespace around the button
+    footerText: "text-sm ml-2",
+    buttonSize: "large" as const,
+  },
+  small: {
+    containerRadius: "rounded-xl",
+    imageArea: "p-4 pt-10",         // Tighter padding to save space
+    badge: "px-2 py-1 text-xs",     // Compact badge
+    title: "text-lg font-bold",     // Standard font size
+    footerArea: "p-2",            // Tighter footer
+    footerText: "text-xs ml-1",
+    buttonSize: "middle" as const,
+  }
+};
+
 interface props {
   lobby: Match;
-  size?: string | undefined;
+  size?: keyof typeof styleVariants;
   className?: string | undefined;
 };
 
@@ -21,7 +42,7 @@ const LobbyCard: React.FC<props> = ({lobby, size, className}: props) => {
   const clearMatch = useMatchStore((state) => state.clearMatch);
   const navigate = useNavigate();
 
-  const buttonSize = size === "large" ? "large" : "medium";
+  const styles = styleVariants[size ?? "small"];
 
   const onTryJoin = async () => {
     setIsLoading(true);
@@ -41,32 +62,46 @@ const LobbyCard: React.FC<props> = ({lobby, size, className}: props) => {
   };
 
   return (
-    <div className={cn("flex flex-col h-full bg-gray-50 border rounded-lg overflow-hidden", className)}>
-      <div 
-        className="h-full relative bg-gray-200"
-        style={{
-          backgroundImage: `url(${CatanLobbyImage})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}
+    <div
+      className={cn(
+        "flex flex-col h-full bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200",
+        styles.containerRadius,
+        className
+      )}
+    >
+      <div
+        className={cn(
+          "grow relative flex flex-col justify-between bg-gray-200 border-b border-gray-200 bg-cover bg-center",
+          styles.imageArea
+        )}
+        style={{ backgroundImage: `url(${CatanLobbyImage})` }}
       >
-        <div className="absolute inset-0 flex items-end p-4 bg-linear-to-t from-black/60 to-transparent">
-          <h3 className="text-white font-bold text-lg">{lobby.gameTitle}</h3>
-          <h3 className="text-white font-bold text-md ml-auto">{lobby.numPlayers} / {lobby.maxPlayers}</h3>
+        <div className={cn(
+          "absolute right-3 top-3 bg-gray-900/80 backdrop-blur-sm rounded-md shadow-sm font-bold text-white tracking-wide",
+          styles.badge
+        )}>
+          <span className="text-xs font-bold text-white tracking-wide">
+            {lobby.numPlayers} / {lobby.maxPlayers} Players
+          </span>
+        </div>
+        <div className="absolute inset-x-0 bottom-0 p-4 pt-12 bg-linear-to-t from-black/80 via-black/40 to-transparent flex items-end">
+          <h3 className={cn("text-white leading-tight", styles.title)}>{lobby.gameTitle}</h3>
         </div>
       </div>
 
-      <div className="p-0">
+
+      <div className={cn("bg-white flex justify-between items-center", styles.footerArea)}>
+        <p className={cn("font-medium text-gray-500", styles.footerText)}>
+          Public Match
+        </p>
         <Button
           type="primary"
-          className="rounded-t-none"
-          style={{borderTopLeftRadius: "0px", borderTopRightRadius: "0px"}}
-          block
+          size={styles.buttonSize}
+          className="font-semibold shadow-sm"
           disabled={isLoading}
-          size={buttonSize}
           onClick={onTryJoin}
         >
-          <span className="min-w-20">
+          <span className="min-w-20 text-center inline-block">
             {isLoading ? 'Joining...' : 'Join'}
           </span>
         </Button>

@@ -60,8 +60,8 @@ const Home: React.FC = () => {
     <>
       <Navbar />
       <div className="bg-background min-h-screen flex flex-col items-center justify-center pt-16 lg:pt-0">
-        <div className="max-w-6xl w-fit mx-auto space-y-6">
-          <div className="flex flex-row max-w-5xl w-[70vw] p-2 gap-2 bg-surface rounded-lg shadow-md border border-gray-200">
+        <div className="max-w-5xl w-[80vw] lg:w-[70vw] mx-auto space-y-6">
+          <div className="flex flex-row p-2 gap-2 bg-surface rounded-lg shadow-md border border-gray-200">
             <ConfigProvider
               theme={{
                 components: {
@@ -100,7 +100,7 @@ const Home: React.FC = () => {
                 theme={{
                   components: {
                     Button: {
-                      colorPrimary: '#333333',
+                      colorPrimary: '#364153',
                       colorPrimaryHover: '#7a7a7a',
                       colorPrimaryActive: '#545454',
                     },
@@ -123,13 +123,19 @@ const Home: React.FC = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 auto-rows-[240px]">
             <div className="col-span-1 row-span-1 lg:col-span-2 lg:row-span-2">
-              <LobbyCard lobby={matches[0]}/>
+              { isFetching ? <Skeleton className="w-full h-full"/> : 
+                matches.length < 1 ? <>No Open Lobbies Available</> :
+                    <LobbyCard lobby={matches[2]} size="large"/> }
             </div>
             <div className="col-span-1 row-span-1">
-              <LobbyCard lobby={matches[1]}/>
+              { isFetching ? <Skeleton className="w-full h-full"/> : 
+                matches.length < 2 ? <></> :
+                    <LobbyCard lobby={matches[1]}/> }
             </div>
             <div className="col-span-1 row-span-1">
-              <LobbyCard lobby={matches[2]}/>
+              { isFetching ? <Skeleton className="w-full h-full"/> : 
+                matches.length < 3 ? <></> :
+                    <LobbyCard lobby={matches[2]}/> }
             </div>
           </div>
           
