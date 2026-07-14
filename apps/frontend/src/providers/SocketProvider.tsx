@@ -3,15 +3,20 @@ import { SocketContext } from "./useSocket";
 import { Socket, io } from "socket.io-client";
 import { useMatchStore } from "../services/useMatchStore";
 import { getAccessToken, refreshAccessToken } from "../services/api";
+import { useNavigate } from "react-router";
 
 export const SocketProvider = ({children}: {children: React.ReactNode}) => {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
   const { matchId } = useMatchStore();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if (!matchId) return;
+    if (!matchId) {
+      navigate('/')
+      return;
+    }
 
     const socket = io('http://localhost:3000', {
       auth: (cb: (payload: { token?: string | null }) => void) => {
@@ -34,7 +39,10 @@ export const SocketProvider = ({children}: {children: React.ReactNode}) => {
           socket.connect();
         } catch {
           console.error("Refresh failed. User must log in again.");
+          navigate('/');
         }
+      } else {
+        navigate('/');
       }
     });
 
@@ -45,7 +53,7 @@ export const SocketProvider = ({children}: {children: React.ReactNode}) => {
     return () => {
       socket.disconnect();
     };
-  }, [matchId]);
+  }, [matchId, navigate]);
 
   return (
     // eslint-disable-next-line react-hooks/refs

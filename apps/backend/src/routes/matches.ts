@@ -1,5 +1,5 @@
 import express, { type Request, type Response } from 'express';
-import { game, match, matchPlayer, MatchStatus, type ApiErrorResponse, type CreateMatchRequest, type CreateMatchResponse, type JoinMatchRequest, type JoinMatchResponse, type Match, type MatchListParams, type MatchListResponse, type PlayMoveRequest, type PlayMoveResponse } from '@board-bot-arena/shared';
+import { game, match, matchPlayer, MatchStatus, user, UserRole, type ApiErrorResponse, type CreateMatchRequest, type CreateMatchResponse, type JoinMatchRequest, type JoinMatchResponse, type LobbyPlayer, type Match, type MatchDetailsParams, type MatchDetailsResponse, type MatchListParams, type MatchListResponse, type PlayMoveRequest, type PlayMoveResponse, type User } from '@board-bot-arena/shared';
 import { db } from '../db/index.ts';
 import { eq, SQL } from 'drizzle-orm';
 import { generateJoinCode } from '../utils/genCodes.ts';
@@ -7,10 +7,11 @@ import { generateJoinCode } from '../utils/genCodes.ts';
 const router = express.Router();
 
 router.get('/', (
-    req: Request<MatchListParams>,
+    req: Request<{}, any, any, MatchListParams>,
     res: Response<MatchListResponse | ApiErrorResponse>,
 ) => {
-    const { gameId, userId, botId, status, count } = req.params;
+  try {
+    const { gameId, userId, botId, status, count } = req.query;
 
     const example = {
       matchId: 6,
@@ -22,6 +23,59 @@ router.get('/', (
       createdAt: new Date(Date.now()),
     }
     res.json([example, example, example]);
+
+  } catch(e) {
+    console.error("Creating lobby error:", e);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+router.get('/:matchId', async (
+    req: Request<MatchDetailsParams>,
+    res: Response<MatchDetailsResponse | ApiErrorResponse>,
+) => {
+  try {
+    const matchId = parseInt(req.params.matchId as unknown as string, 10);
+    if (isNaN(matchId)) {
+      return res.status(400).json({ error: "Invalid matchId format." });
+    }
+    
+    const [dbMatch] = await db
+      .select()
+      .from(match)
+      .innerJoin(game, eq(game.id, match.gameId))
+      .where(eq(match.id, matchId));
+    if (!dbMatch) return res.status(404).json({ error: "Could not find match" });
+    
+    const gameMatch: Match = {
+      matchId,
+      gameId: dbMatch.game.id,
+      gameTitle: dbMatch.game.name,
+      numPlayers: dbMatch.match.numPlayers,
+      maxPlayers: dbMatch.game.maxPlayers,
+      status: dbMatch.match.status as MatchStatus,
+      createdAt: dbMatch.match.createdAt
+    }
+
+    const dbPlayers = await db
+      .select()
+      .from(matchPlayer)
+      .innerJoin(user, eq(user.id, matchPlayer.userId))
+      .where(eq(matchPlayer.matchId, matchId));
+    
+    const players: LobbyPlayer[] = dbPlayers.map((p) => ({
+      type: "user",
+      userId: p.user.id,
+      name: p.match_player.name ?? p.user.name,
+      role: p.user.role as UserRole, 
+    }));
+
+    res.json({ match: gameMatch, players });
+  } catch (e) {
+    console.error("Creating lobby error:", e);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 

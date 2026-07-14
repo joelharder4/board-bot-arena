@@ -65,6 +65,7 @@ export const matchPlayer = pgTable("match_player", {
   botId: integer("bot_id").references(() => bot.id),
   userId: integer("user_id").references(() => user.id),
   
+  name: text(),
   colour: char({ length: 7 }).default("#000000").notNull(), 
   teamIndex: integer("team_index"), // Optional: tells you who is allied
   score: integer().default(0),

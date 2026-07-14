@@ -161,6 +161,11 @@ export interface JoinMatchResponse {
   playerSlot: number;
 }
 
+// POST /api/matches/leave
+export interface LeaveMatchRequest {
+  matchId: number;
+}
+export interface LeaveMatchResponse {}
 
 
 
