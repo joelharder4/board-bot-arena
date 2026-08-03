@@ -1,4 +1,4 @@
-import { Outlet } from "react-router";
+import { Outlet, useNavigate } from "react-router";
 import { useSocket } from "../providers/useSocket";
 import { Button, message, Tooltip } from "antd";
 import { CopyOutlined, MessageOutlined, RightOutlined } from "@ant-design/icons";
@@ -30,6 +30,7 @@ export default function MatchArenaLayout() {
   const matchId = useMatchStore((state) => state.matchId);
 
   const { isConnected } = useSocket();
+  const navigate = useNavigate();
 
   useEffect(() => {
       const fetchDetails = async () => {
@@ -48,8 +49,12 @@ export default function MatchArenaLayout() {
       fetchDetails();
   }, [matchId]);
 
-  const onLeaveMatch = () => {
-    message.info("NOT IMPLEMENTED");
+  const onLeaveMatch = async () => {
+    if (curMatch) {
+      await api.post('/matches/leave', { matchId: curMatch.matchId });
+    }
+
+    navigate('/');
   }
 
   return (
@@ -104,9 +109,9 @@ export default function MatchArenaLayout() {
                 <div className="flex flex-col justify-between">
                   <div className="flex flex-row gap-1.5 items-center">
                     <span className="text-sm font-bold leading-none">{p.name}</span>
-                    <PlayerTag text="Host"/>
+                    {p.isHost && <PlayerTag text="Host"/>}
                   </div>
-                  <span className="text-xs text-gray-600">Blue Team</span>
+                  <span className="text-xs text-gray-600">{p.colour} Team</span>
                 </div>
               </div>
             );

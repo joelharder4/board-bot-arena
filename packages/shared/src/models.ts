@@ -38,4 +38,13 @@ export interface Match {
   deletedAt?: Date;
 }
 
-export type LobbyPlayer = User | Bot;
+export interface LobbyPlayer {
+  type: "user" | "bot";
+  userId: number;
+  ownerId?: number;
+  name: string;
+  colour: string;
+  teamId: number | null;
+  isHost: boolean;
+  isReady: boolean;
+}

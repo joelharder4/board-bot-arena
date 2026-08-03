@@ -71,6 +71,7 @@ export const matchPlayer = pgTable("match_player", {
   score: integer().default(0),
   state: jsonb().default({}),
   isWinner: boolean("is_winner").default(false).notNull(),
+  abandoned: boolean("abandoned").default(false).notNull(),
 }, (table) => [
   check(
     "participant_type_check",

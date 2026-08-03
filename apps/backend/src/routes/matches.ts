@@ -1,7 +1,7 @@
 import express, { type Request, type Response } from 'express';
-import { game, match, matchPlayer, MatchStatus, user, UserRole, type ApiErrorResponse, type CreateMatchRequest, type CreateMatchResponse, type JoinMatchRequest, type JoinMatchResponse, type LobbyPlayer, type Match, type MatchDetailsParams, type MatchDetailsResponse, type MatchListParams, type MatchListResponse, type PlayMoveRequest, type PlayMoveResponse, type User } from '@board-bot-arena/shared';
+import { game, match, matchPlayer, MatchStatus, user, type ApiErrorResponse, type CreateMatchRequest, type CreateMatchResponse, type JoinMatchRequest, type JoinMatchResponse, type LeaveMatchRequest, type LeaveMatchResponse, type LobbyPlayer, type Match, type MatchDetailsParams, type MatchDetailsResponse, type MatchListParams, type MatchListResponse, type PlayMoveRequest, type PlayMoveResponse } from '@board-bot-arena/shared';
 import { db } from '../db/index.ts';
-import { eq, SQL } from 'drizzle-orm';
+import { and, count, eq, SQL } from 'drizzle-orm';
 import { generateJoinCode } from '../utils/genCodes.ts';
 
 const router = express.Router();
@@ -68,7 +68,10 @@ router.get('/:matchId', async (
       type: "user",
       userId: p.user.id,
       name: p.match_player.name ?? p.user.name,
-      role: p.user.role as UserRole, 
+      colour: p.match_player.colour, // TODO: add colour/team name?
+      teamId: p.match_player.teamIndex,
+      isHost: true, // TODO: change schema
+      isReady: false,
     }));
 
     res.json({ match: gameMatch, players });
@@ -176,13 +179,12 @@ router.post('/join', async (
       playerSlot: dbMatch.match.numPlayers + 1,
     });
   } catch(e) {
-    console.error("Joining lobby error:", e);
+    console.error("Joining lobby error: ", e);
     return res.status(500).json({ error: "Internal server error" });
   }
 });
 
 
-// The Express Request generic takes 4 arguments: Params, ResBody, ReqBody, Query
 router.post('/move', (
     req: Request<{}, any, PlayMoveRequest>,
     res: Response<PlayMoveResponse>
@@ -197,5 +199,64 @@ router.post('/move', (
 
     res.json({ success: true, message: "Move accepted", newTurnNumber: 6 });
 });
+
+
+
+router.post('/leave', async (
+  req: Request<{}, any, LeaveMatchRequest>,
+  res: Response<LeaveMatchResponse | ApiErrorResponse>,
+): Promise<any> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: "User not authenticated" });
+      return;
+    }
+    const userId = req.user.userId;
+    const { matchId } = req.body;
+
+    await db.transaction(async (tx) => {
+      const [dbMatch] = await tx
+        .select()
+        .from(match)
+        .where(eq(match.id, matchId));
+      if (!dbMatch) return res.status(404).json({ error: "Match not found" });
+
+      // TODO: if player is the host, transfer host to another player
+      if (dbMatch.status === MatchStatus.PENDING) {
+        await tx.delete(matchPlayer).where(and(
+          eq(matchPlayer.userId, userId),
+          eq(matchPlayer.matchId, matchId)
+        ));
+      } else {
+        await tx.update(matchPlayer).set({ abandoned: true }).where(and(
+          eq(matchPlayer.userId, userId),
+          eq(matchPlayer.matchId, matchId)
+        ));
+      }
+
+      const [activePlayers] = await tx
+        .select({ count: count() })
+        .from(matchPlayer)
+        .where(and(
+          eq(matchPlayer.matchId, matchId),
+          eq(matchPlayer.abandoned, false)
+        ));
+
+      if (!activePlayers || activePlayers.count <= 0) {
+        await tx.update(match).set({ status: MatchStatus.ABORTED }).where(eq(match.id, matchId));
+      }
+    });
+
+    const io = req.app.get('io');
+    io.to(`/matches/${matchId}`).emit('player_left', { userId });
+
+    res.status(200).json({});
+    
+  } catch (e) {
+    console.error("Leaving lobby error: ", e);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 
 export default router;
