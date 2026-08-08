@@ -66,8 +66,8 @@ export const matchPlayer = pgTable("match_player", {
   userId: integer("user_id").references(() => user.id),
   
   name: text(),
-  colour: char({ length: 7 }).default("#000000").notNull(), 
-  teamIndex: integer("team_index"), // Optional: tells you who is allied
+  colour: char({ length: 7 }).default("#000000").notNull(),
+  teamIndex: integer("team_index"),
   score: integer().default(0),
   state: jsonb().default({}),
   isWinner: boolean("is_winner").default(false).notNull(),
