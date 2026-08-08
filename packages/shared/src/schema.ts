@@ -54,7 +54,7 @@ export const match = pgTable("match", {
   botsOnly: boolean("bots_only").default(false).notNull(),
   numPlayers: integer("num_players").default(0).notNull(),
   status: matchStatusEnum().default("pending").notNull(),
-  joinCode: varchar({ length: 6 }),
+  joinCode: varchar({ length: 6 }).notNull(),
   ...timestamps,
 });
 
@@ -67,7 +67,7 @@ export const matchPlayer = pgTable("match_player", {
   
   name: text(),
   colour: char({ length: 7 }).default("#000000").notNull(),
-  teamIndex: integer("team_index"),
+  teamIndex: integer("team_index").notNull(),
   score: integer().default(0),
   state: jsonb().default({}),
   isWinner: boolean("is_winner").default(false).notNull(),

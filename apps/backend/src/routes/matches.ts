@@ -1,5 +1,5 @@
 import express, { type Request, type Response } from 'express';
-import { game, match, matchPlayer, MatchStatus, user, type ApiErrorResponse, type CreateMatchRequest, type CreateMatchResponse, type JoinMatchRequest, type JoinMatchResponse, type LeaveMatchRequest, type LeaveMatchResponse, type LobbyPlayer, type Match, type MatchDetailsParams, type MatchDetailsResponse, type MatchListParams, type MatchListResponse, type PlayMoveRequest, type PlayMoveResponse } from '@board-bot-arena/shared';
+import { game, match, matchPlayer, MatchStatus, TEAM_MAP, user, type ApiErrorResponse, type CreateMatchRequest, type CreateMatchResponse, type JoinMatchRequest, type JoinMatchResponse, type LeaveMatchRequest, type LeaveMatchResponse, type LobbyPlayer, type Match, type MatchDetailsParams, type MatchDetailsResponse, type MatchListParams, type MatchListResponse, type PlayMoveRequest, type PlayMoveResponse } from '@board-bot-arena/shared';
 import { db } from '../db/index.ts';
 import { and, count, eq, SQL } from 'drizzle-orm';
 import { generateJoinCode } from '../utils/genCodes.ts';
@@ -51,6 +51,7 @@ router.get('/:matchId', async (
     const gameMatch: Match = {
       matchId,
       gameId: dbMatch.game.id,
+      joinCode: dbMatch.match.joinCode,
       gameTitle: dbMatch.game.name,
       numPlayers: dbMatch.match.numPlayers,
       maxPlayers: dbMatch.game.maxPlayers,
@@ -68,7 +69,7 @@ router.get('/:matchId', async (
       type: "user",
       userId: p.user.id,
       name: p.match_player.name ?? p.user.name,
-      colour: p.match_player.colour, // TODO: add colour/team name?
+      colour: p.match_player.colour,
       teamId: p.match_player.teamIndex,
       isHost: true, // TODO: change schema
       isReady: false,
@@ -105,6 +106,7 @@ router.post('/create', async (
     const [dbMatchPlayer] = await db.insert(matchPlayer).values({
       matchId: dbMatch.id,
       userId,
+      teamIndex: 1,
       // colour: "#000000",
       state: {}, // NOTE: this should probably be a default from schema
     }).returning();
@@ -164,10 +166,23 @@ router.post('/join', async (
       return res.status(404).json({ error: "Match deleted" });
     }
 
+    // TODO: Add gamerule to allow multiple players on a team
+    const existingTeams = await db
+      .select({team: matchPlayer.teamIndex})
+      .from(matchPlayer)
+      .where(eq(matchPlayer.matchId, dbMatch.match.id));
+    
+    const usedTeams = new Set<number>(existingTeams.map(t => t.team));
+    let nextAvailableTeamId = 1;
+    while (usedTeams.has(nextAvailableTeamId)) {
+      nextAvailableTeamId++;
+    }
+
     const [dbMatchPlayer] = await db.insert(matchPlayer).values({
       matchId: dbMatch.match.id,
       userId: userId,
-      colour: "#676767", // TODO: ASSIGN COLOURS
+      teamIndex: nextAvailableTeamId,
+      colour: TEAM_MAP[nextAvailableTeamId]?.hex ?? "#676869",
     }).returning();
     if (!dbMatchPlayer) return res.status(500).json({ error: "Failed to join match" });
 

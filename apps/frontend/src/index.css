@@ -18,6 +18,8 @@
 
 @tailwind utilities;
 
+@source "../../../packages/shared/src";
+
 /* 
 colour theme
 #F5FAF6 - light grey/white/green

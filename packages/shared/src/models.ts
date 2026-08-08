@@ -29,6 +29,7 @@ export enum MatchStatus {
 export interface Match {
   matchId: number;
   gameId: number;
+  joinCode?: string;
   gameTitle: string;
   numPlayers: number;
   maxPlayers: number;
@@ -44,7 +45,7 @@ export interface LobbyPlayer {
   ownerId?: number;
   name: string;
   colour: string;
-  teamId: number | null;
+  teamId: number;
   isHost: boolean;
   isReady: boolean;
 }
