@@ -1,7 +1,7 @@
 import { Outlet, useNavigate } from "react-router";
 import { useSocket } from "../providers/useSocket";
 import { Button, message, Tooltip } from "antd";
-import { CopyOutlined, MessageOutlined, RightOutlined } from "@ant-design/icons";
+import { CopyOutlined, EyeInvisibleOutlined, EyeOutlined, MessageOutlined, RightOutlined } from "@ant-design/icons";
 import React, { useEffect, useRef, useState } from "react";
 import { type Match, type LobbyPlayer, type MatchDetailsParams, type MatchDetailsResponse, TEAM_MAP } from "@board-bot-arena/shared";
 import { useMatchStore } from "../services/useMatchStore";
@@ -29,6 +29,7 @@ export default function MatchArenaLayout() {
   const [playerList, setPlayerList] = useState<Array<LobbyPlayer>>([]);
   const matchId = useMatchStore((state) => state.matchId);
 
+  const [showCode, setShowCode] = useState<boolean>(true);
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
   const timeoutRef = useRef<number | null>(null);
 
@@ -89,12 +90,35 @@ export default function MatchArenaLayout() {
         <div className="divide-x divide-gray-300 flex flex-row items-center">
           <h1 className="text-xl font-bold pr-4">Game Title</h1>
           {curMatch?.joinCode &&
-            <div className="px-4 text-sm text-gray-600 flex flex-row items-center">
+            <div className="px-4 text-sm text-gray-600 flex flex-row items-center gap-2">
               Code:
-              <span className="p-1 m-1 text-xs text-gray-600 font-mono bg-gray-100 border border-gray-200 rounded-sm font-semibold">{curMatch.joinCode}</span>
-              <Tooltip title={copiedCode ? "Copied!" : "Copy Join Code"}>
-                <Button type="text" shape="circle" icon={<CopyOutlined />} onClick={onCopyJoinCode} />
-              </Tooltip>
+              <div className="flex items-center bg-gray-100 border border-gray-200 rounded-md overflow-hidden h-8">
+                <span className={`px-3 text-xs text-gray-700 font-mono font-semibold text-center w-18 select-all ${!showCode && "tracking-[0.2em]"}`}>
+                  {showCode ? curMatch.joinCode : "••••••"}
+                </span>
+
+                <div className="flex items-center bg-white border-l border-gray-200 h-full">
+                  <Tooltip title={showCode ? "Hide Code" : "Show Code"}>
+                    <Button
+                      type="text"
+                      className="rounded-none border-0 h-full text-gray-400 hover:text-gray-700 px-2"
+                      icon={showCode ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                      onClick={() => setShowCode(!showCode)}
+                    />
+                  </Tooltip>
+
+                  <div className="w-px h-4 bg-gray-200"></div>
+
+                  <Tooltip title={copiedCode ? "Copied!" : "Copy Join Code"}>
+                    <Button
+                      type="text"
+                      className="rounded-none border-0 h-full text-gray-400 hover:text-indigo-600 px-2"
+                      icon={<CopyOutlined />}
+                      onClick={onCopyJoinCode}
+                    />
+                  </Tooltip>
+                </div>
+              </div>
             </div>
           }
         </div>
