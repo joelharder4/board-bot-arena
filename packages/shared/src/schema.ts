@@ -1,6 +1,6 @@
 import { pgTable, pgEnum, serial, text, timestamp, integer, varchar, boolean, check, char, jsonb } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
-import { MatchStatus, UserRole } from './models.ts';
+import { LogType, MatchStatus, UserRole } from './models.ts';
 
 export const rolesEnum = pgEnum(
   "roles",
@@ -9,6 +9,10 @@ export const rolesEnum = pgEnum(
 export const matchStatusEnum = pgEnum(
   "match_status",
   Object.values(MatchStatus) as [string, ...string[]]
+);
+export const logTypeEnum = pgEnum(
+  "log_type",
+  Object.values(LogType) as [string, ...string[]]
 );
 
 const timestamps = {
@@ -60,7 +64,7 @@ export const match = pgTable("match", {
 
 export const matchPlayer = pgTable("match_player", {
   id: serial().primaryKey(),
-  matchId: integer("match_id").references(() => match.id).notNull(),
+  matchId: integer("match_id").references(() => match.id, { onDelete: 'cascade' }).notNull(),
   
   botId: integer("bot_id").references(() => bot.id),
   userId: integer("user_id").references(() => user.id),
@@ -78,3 +82,13 @@ export const matchPlayer = pgTable("match_player", {
     sql`(${table.botId} IS NOT NULL AND ${table.userId} IS NULL) OR (${table.botId} IS NULL AND ${table.userId} IS NOT NULL)`
   ),
 ]);
+
+
+export const matchLog = pgTable("match_log", {
+  id: serial().primaryKey(),
+  matchId: integer("match_id").references(() => match.id, { onDelete: 'cascade' }).notNull(),  
+  matchPlayerId: integer("match_player_id").references(() => matchPlayer.id, { onDelete: 'set null' }),
+  type: logTypeEnum().notNull(),
+  payload: jsonb().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});

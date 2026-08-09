@@ -11,19 +11,19 @@ import { useMatchStore } from "../../services/useMatchStore";
 const styleVariants = {
   large: {
     containerRadius: "rounded-2xl",
-    imageArea: "p-6 pt-16",         // More padding, taller gradient fade
-    badge: "px-3 py-1.5 text-sm",   // Bigger badge
-    title: "text-2xl font-bold",   // Heavier, larger font
-    footerArea: "p-4",              // Generous whitespace around the button
+    imageArea: "p-6 pt-16",
+    badge: "px-3 py-1.5 text-sm",
+    title: "text-2xl font-bold",
+    footerArea: "p-4",
     footerText: "text-sm ml-2",
     buttonSize: "large" as const,
   },
   small: {
     containerRadius: "rounded-xl",
-    imageArea: "p-4 pt-10",         // Tighter padding to save space
-    badge: "px-2 py-1 text-xs",     // Compact badge
-    title: "text-lg font-bold",     // Standard font size
-    footerArea: "p-2",            // Tighter footer
+    imageArea: "p-4 pt-10",
+    badge: "px-2 py-1 text-xs",
+    title: "text-lg font-bold",
+    footerArea: "p-2",
     footerText: "text-xs ml-1",
     buttonSize: "middle" as const,
   }

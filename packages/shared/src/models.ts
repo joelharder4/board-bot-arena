@@ -41,11 +41,18 @@ export interface Match {
 
 export interface LobbyPlayer {
   type: "user" | "bot";
-  userId: number;
+  playerId: number;
   ownerId?: number;
   name: string;
   colour: string;
   teamId: number;
   isHost: boolean;
   isReady: boolean;
+}
+
+export enum LogType {
+  CHAT = "chat",
+  SYSTEM = "system",
+  ACTION = "action",
+  TRADE = "trade"
 }

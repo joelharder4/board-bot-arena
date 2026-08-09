@@ -67,7 +67,7 @@ router.get('/:matchId', async (
     
     const players: LobbyPlayer[] = dbPlayers.map((p) => ({
       type: "user",
-      userId: p.user.id,
+      playerId: p.match_player.id,
       name: p.match_player.name ?? p.user.name,
       colour: p.match_player.colour,
       teamId: p.match_player.teamIndex,

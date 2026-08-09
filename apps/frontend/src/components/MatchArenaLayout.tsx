@@ -26,10 +26,12 @@ const PlayerTag: React.FC<PlayerTagProps> = ({text}: PlayerTagProps) => {
 export default function MatchArenaLayout() {
   const [chatOpen, setChatOpen] = useState<boolean>(true);
   const [curMatch, setCurMatch] = useState<Match>();
-  const [playerList, setPlayerList] = useState<Array<LobbyPlayer>>([]);
   const matchId = useMatchStore((state) => state.matchId);
+  const playerList = useMatchStore((state) => state.playerList);
+  const setPlayerList = useMatchStore((state) => state.setPlayerList);
+  const clearMatchStore = useMatchStore((state) => state.clearMatch);
 
-  const [showCode, setShowCode] = useState<boolean>(true);
+  const [showCode, setShowCode] = useState<boolean>(false);
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
   const timeoutRef = useRef<number | null>(null);
 
@@ -38,25 +40,26 @@ export default function MatchArenaLayout() {
 
   useEffect(() => {
     const fetchDetails = async () => {
-    try {
-      if (!matchId) return;
-      const params: MatchDetailsParams = { matchId }
-      const res = await api.get<MatchDetailsResponse>(`/matches/${matchId}`, { params: params });
-      setPlayerList(res.data.players);
-      setCurMatch(res.data.match);
-    } catch {
-      message.error('Failed to fetch match details');
-      // TODO: retry/leave?
-    }
+      try {
+        if (!matchId) return;
+        const params: MatchDetailsParams = { matchId }
+        const res = await api.get<MatchDetailsResponse>(`/matches/${matchId}`, { params: params });
+        setPlayerList(res.data.players);
+        setCurMatch(res.data.match);
+      } catch {
+        message.error('Failed to fetch match details');
+        // TODO: retry/leave?
+      }
     }
     
     fetchDetails();
-  }, [matchId]);
+  }, [matchId, setPlayerList]);
 
   const onLeaveMatch = async () => {
     try {
       if (curMatch) await api.post('/matches/leave', { matchId: curMatch.matchId });
     } finally {
+      clearMatchStore();
       navigate('/');
     }
   };
@@ -155,7 +158,7 @@ export default function MatchArenaLayout() {
           </div>
           {playerList.map((p: LobbyPlayer) => {
             return (
-              <div key={p.userId} className="border-y border-gray-200 h-16 flex flex-row items-center p-3 gap-3">
+              <div key={p.playerId} className="border-y border-gray-200 h-16 flex flex-row items-center p-3 gap-3">
                 <div className={`w-8 h-8 rounded-sm ${TEAM_MAP[p.teamId].badgeClass}`}></div>
                 <div className="flex flex-col justify-between">
                   <div className="flex flex-row gap-1.5 items-center">
