@@ -3,7 +3,7 @@ import { useState } from "react";
 import { type JoinMatchResponse, type Match } from "@board-bot-arena/shared";
 import { cn } from "../../utils/shadcn";
 import { Button, message } from "antd";
-import CatanLobbyImage from "../../assets/catan_lobby.png";
+import FrontierLobbyImage from "../../assets/frontier_lobby.png";
 import { api } from "../../services/api";
 import { useNavigate } from "react-router";
 import { useMatchStore } from "../../services/useMatchStore";
@@ -74,7 +74,7 @@ const LobbyCard: React.FC<props> = ({lobby, size, className}: props) => {
           "grow relative flex flex-col justify-between bg-gray-200 border-b border-gray-200 bg-cover bg-center",
           styles.imageArea
         )}
-        style={{ backgroundImage: `url(${CatanLobbyImage})` }}
+        style={{ backgroundImage: `url(${FrontierLobbyImage})` }}
       >
         <div className={cn(
           "absolute right-3 top-3 bg-gray-900/80 backdrop-blur-sm rounded-md shadow-sm font-bold text-white tracking-wide",

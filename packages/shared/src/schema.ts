@@ -37,7 +37,6 @@ export const session = pgTable("session", {
   refreshToken: text(),
 });
 
-// e.g. 1, "Catan", "Strategy", 2, 4
 export const game = pgTable("game", {
   id: serial().primaryKey(),
   name: text().unique().notNull(),

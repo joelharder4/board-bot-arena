@@ -16,7 +16,7 @@ router.get('/', (
     const example = {
       matchId: 6,
       gameId: 0,
-      gameTitle: "Catan",
+      gameTitle: "Frontiers",
       numPlayers: 2,
       maxPlayers: 4,
       status: MatchStatus.PENDING,
