@@ -108,7 +108,6 @@ router.post('/create', async (
       userId,
       teamIndex: 1,
       // colour: "#000000",
-      state: {}, // NOTE: this should probably be a default from schema
     }).returning();
     if (!dbMatchPlayer) {
       await db.delete(match).where(eq(match.id, dbMatch.id));
