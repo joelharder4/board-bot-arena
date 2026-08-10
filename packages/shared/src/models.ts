@@ -50,6 +50,10 @@ export interface LobbyPlayer {
   isReady: boolean;
 }
 
+export interface MatchPlayer {
+  type: "user" | "bot";
+}
+
 export enum LogType {
   CHAT = "chat",
   SYSTEM = "system",

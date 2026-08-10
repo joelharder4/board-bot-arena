@@ -58,6 +58,7 @@ export const match = pgTable("match", {
   numPlayers: integer("num_players").default(0).notNull(),
   status: matchStatusEnum().default("pending").notNull(),
   joinCode: varchar({ length: 6 }).notNull(),
+  state: jsonb().default({}).notNull(),
   ...timestamps,
 });
 
@@ -72,7 +73,6 @@ export const matchPlayer = pgTable("match_player", {
   colour: char({ length: 7 }).default("#000000").notNull(),
   teamIndex: integer("team_index").notNull(),
   score: integer().default(0),
-  state: jsonb().default({}),
   isWinner: boolean("is_winner").default(false).notNull(),
   abandoned: boolean("abandoned").default(false).notNull(),
 }, (table) => [
