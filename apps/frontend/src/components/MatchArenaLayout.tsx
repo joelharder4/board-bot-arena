@@ -6,6 +6,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { type Match, type LobbyPlayer, type MatchDetailsParams, type MatchDetailsResponse, TEAM_MAP } from "@board-bot-arena/shared";
 import { useMatchStore } from "../services/useMatchStore";
 import { api } from "../services/api";
+import { MatchLogContainer } from "./match-log/MatchLogContainer";
 
 // TODO: Move to its own file?
 interface PlayerTagProps {
@@ -25,10 +26,13 @@ const PlayerTag: React.FC<PlayerTagProps> = ({text}: PlayerTagProps) => {
 
 export default function MatchArenaLayout() {
   const [chatOpen, setChatOpen] = useState<boolean>(true);
-  const [curMatch, setCurMatch] = useState<Match>();
+  const [curMatch, setCurMatch] = useState<Match>(); // maybe move this into useMatchStore
+
   const matchId = useMatchStore((state) => state.matchId);
   const playerList = useMatchStore((state) => state.playerList);
   const setPlayerList = useMatchStore((state) => state.setPlayerList);
+  // const matchLog = useMatchStore((state) => state.matchLog);
+  const setMatchLog = useMatchStore((state) => state.setMatchLog);
   const clearMatchStore = useMatchStore((state) => state.clearMatch);
 
   const [showCode, setShowCode] = useState<boolean>(false);
@@ -45,7 +49,9 @@ export default function MatchArenaLayout() {
         const params: MatchDetailsParams = { matchId }
         const res = await api.get<MatchDetailsResponse>(`/matches/${matchId}`, { params: params });
         setPlayerList(res.data.players);
+        setMatchLog(res.data.log);
         setCurMatch(res.data.match);
+        console.log(res.data.log);
       } catch {
         message.error('Failed to fetch match details');
         // TODO: retry/leave?
@@ -53,7 +59,7 @@ export default function MatchArenaLayout() {
     }
     
     fetchDetails();
-  }, [matchId, setPlayerList]);
+  }, [matchId, setPlayerList, setMatchLog]);
 
   const onLeaveMatch = async () => {
     try {
@@ -191,6 +197,7 @@ export default function MatchArenaLayout() {
               <RightOutlined />
             </Button>
           </div>
+          <MatchLogContainer />
         </aside>
       </main>
     </div>

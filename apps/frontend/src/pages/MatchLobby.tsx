@@ -11,11 +11,6 @@ const MatchLobby: React.FC = () => {
     return me?.isHost;
   });
 
-  // const onInputVP = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const num = parseInt(e.target.value)
-  //   return isNaN(num) ? "" : num;
-  // }
-
   return (
     <div className="flex flex-col bg-gray-100 w-full h-full items-center justify-center">
       <div className="max-w-md w-full h-auto bg-white border border-gray-200 rounded-md shadow-md p-6 md:p-8 flex flex-col items-center">
@@ -59,13 +54,6 @@ const MatchLobby: React.FC = () => {
               <Switch />
             </Form.Item>
           </div>
-
-          {/* <div className="bg-gray-50 border border-gray-200 p-4 rounded-xl flex justify-between items-center shadow-sm">
-            <span className="font-bold text-gray-700">Fast Turn Timer (60s)</span>
-            <Form.Item name="fastTimer" valuePropName="checked" noStyle>
-              <Switch />
-            </Form.Item>
-          </div> */}
 
           <div className="pt-2">
             <Button

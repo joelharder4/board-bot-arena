@@ -81,10 +81,17 @@ router.get('/:matchId', async (
       .where(eq(matchLog.matchId, matchId));
     
     const log: MatchLogEvent[] = dbLog.map((l) => {
-      return MatchLogSchema.parse({
+      const parsedData = MatchLogSchema.parse({
         type: l.type,
         payload: l.payload,
       });
+
+      return {
+        id: l.id,
+        matchId: l.matchId,
+        createdAt: l.createdAt.toISOString(),
+        ...parsedData,
+      };
     });
 
     res.json({ match: gameMatch, players, log });

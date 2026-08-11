@@ -3,6 +3,7 @@ import { LogType } from "./models.ts";
 
 export const ChatPayloadSchema = z.object({
   text: z.string().min(1).max(300),
+  senderPlayerId: z.number(),
 });
 
 export const SystemPayloadSchema = z.object({
@@ -24,7 +25,6 @@ export const TradePayloadSchema = z.object({
   requested: z.record(z.string(), z.number()),
 });
 
-
 export const MatchLogSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal(LogType.CHAT), payload: ChatPayloadSchema }),
   z.object({ type: z.literal(LogType.SYSTEM), payload: SystemPayloadSchema }),
@@ -32,8 +32,14 @@ export const MatchLogSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal(LogType.TRADE), payload: TradePayloadSchema }),
 ]);
 
-export type MatchLogEvent = z.infer<typeof MatchLogSchema>;
+export type LogEventData = z.infer<typeof MatchLogSchema>;
 export type SystemPayload = z.infer<typeof SystemPayloadSchema>;
 export type ChatPayload = z.infer<typeof ChatPayloadSchema>;
 export type ActionPayload = z.infer<typeof ActionPayloadSchema>;
 export type TradePayload = z.infer<typeof TradePayloadSchema>;
+
+export type MatchLogEvent = {
+  id: number;
+  matchId: number;
+  createdAt: string;
+} & LogEventData;
