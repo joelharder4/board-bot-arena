@@ -9,6 +9,7 @@ declare global {
       user?: {
         userId: number;
         role: UserRole;
+        name: string;
       };
     }
   }
@@ -25,7 +26,7 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction): vo
 
   try {
     const token = authHeader.split(' ')[1]!;
-    const payload = jwt.verify(token, config.JWT_ACCESS_SECRET) as { userId: number; role: UserRole };
+    const payload = jwt.verify(token, config.JWT_ACCESS_SECRET) as { userId: number; role: UserRole; name: string; };
     req.user = payload;
     
     next();

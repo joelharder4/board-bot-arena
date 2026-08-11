@@ -8,7 +8,7 @@ export interface FrontiersResourceConfig {
 
 export interface FrontiersGameState {
   turnPlayerId: number;
-  phase: "setup" | "main" | "robber";
+  phase: "setup" | "roll" | "build" | "robber";
   board: {
     hexes: Array<{ q: number; r: number; resource: string; diceValue: number }>;
     roads: Array<{ ownerId: number; q: number; r: number; edge: number }>;

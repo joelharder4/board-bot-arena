@@ -44,7 +44,11 @@ router.post('/register',
 
       // JWT generation
       const accessToken = jwt.sign(
-        { userId: newUser.id },
+        {
+          userId: newUser.id,
+          role: newUser.role,
+          name: newUser.name,
+        },
         config.JWT_ACCESS_SECRET,
         { expiresIn: '1h' }
       );
@@ -89,7 +93,11 @@ router.post('/guest', async (
 
     // JWT generation
     const token = jwt.sign(
-        { userId: newGuest.id },
+        {
+          userId: newGuest.id,
+          role: newGuest.role,
+          name: newGuest.name,
+        },
         config.JWT_ACCESS_SECRET,
         { expiresIn: '4h' }
     );
@@ -126,7 +134,11 @@ router.post('/login', async (
 
     // JWT generation
     const accessToken = jwt.sign(
-      { userId: existingUser.id },
+      {
+        userId: existingUser.id,
+        role: existingUser.role,
+        name: existingUser.name,
+      },
       config.JWT_ACCESS_SECRET,
       { expiresIn: '1h' }
     );
@@ -169,13 +181,13 @@ router.post('/refresh', async (
 
     const payload = jwt.verify(refreshToken, config.JWT_REFRESH_SECRET) as {
       userId: number;
-      role: string;
     };
 
     const [sessionData] = await db
       .select({
         userId: user.id,
         role: user.role,
+        name: user.name,
         sessionId: session.id,
       })
       .from(session)
@@ -196,12 +208,12 @@ router.post('/refresh', async (
 
     // Issue new JWT tokens
     const newAccessToken = jwt.sign(
-      { userId: sessionData.userId, role: sessionData.role },
+      { userId: sessionData.userId, role: sessionData.role, name: sessionData.name },
       config.JWT_ACCESS_SECRET,
-      { expiresIn: '15m' },
+      { expiresIn: '30m' },
     );
     const newRefreshToken = jwt.sign(
-      { userId: sessionData.userId, role: sessionData.role },
+      { userId: sessionData.userId },
       config.JWT_REFRESH_SECRET,
       { expiresIn: '14d' },
     );
@@ -275,7 +287,7 @@ router.post('/logout', async (
     if (refreshToken) {
       const payload = jwt.verify(refreshToken, config.JWT_REFRESH_SECRET, {
         ignoreExpiration: true
-      }) as { userId: number; role: UserRole };
+      }) as { userId: number };
       
       await db.delete(session).where(
         and(

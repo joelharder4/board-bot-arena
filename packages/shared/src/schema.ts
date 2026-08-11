@@ -74,7 +74,8 @@ export const matchPlayer = pgTable("match_player", {
   teamIndex: integer("team_index").notNull(),
   score: integer().default(0),
   isWinner: boolean("is_winner").default(false).notNull(),
-  abandoned: boolean("abandoned").default(false).notNull(),
+  isHost: boolean("is_host").default(false).notNull(),
+  abandoned: boolean().default(false).notNull(),
 }, (table) => [
   check(
     "participant_type_check",

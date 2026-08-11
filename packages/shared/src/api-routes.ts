@@ -33,6 +33,7 @@ When a lobby starts, it creates a new match record and a match_player record for
 
 import { z } from 'zod';
 import type { Bot, LobbyPlayer, Match, MatchStatus, UserRole } from "./models.ts";
+import type { MatchLogEvent } from './match-logs.ts';
 
 export interface ApiErrorResponse {
   error: string;
@@ -147,6 +148,7 @@ export interface MatchDetailsParams {
 export interface MatchDetailsResponse {
   match: Match;
   players: Array<LobbyPlayer>;
+  log: Array<MatchLogEvent>;
 }
 
 // POST /api/matches/join
@@ -169,18 +171,18 @@ export interface LeaveMatchResponse {}
 
 
 
-// EXAMPLES:
-// Define what the frontend MUST send
-export interface PlayMoveRequest {
-  matchId: number;
-  action: string;
-  targetX: number;
-  targetY: number;
-}
+// // EXAMPLES:
+// // Define what the frontend MUST send
+// export interface PlayMoveRequest {
+//   matchId: number;
+//   action: string;
+//   targetX: number;
+//   targetY: number;
+// }
 
-// Define what the backend MUST return
-export interface PlayMoveResponse {
-  success: boolean;
-  message: string;
-  newTurnNumber?: number; // Optional
-}
+// // Define what the backend MUST return
+// export interface PlayMoveResponse {
+//   success: boolean;
+//   message: string;
+//   newTurnNumber?: number; // Optional
+// }

@@ -33,6 +33,7 @@ export const MatchLogSchema = z.discriminatedUnion("type", [
 ]);
 
 export type MatchLogEvent = z.infer<typeof MatchLogSchema>;
+export type SystemPayload = z.infer<typeof SystemPayloadSchema>;
 export type ChatPayload = z.infer<typeof ChatPayloadSchema>;
 export type ActionPayload = z.infer<typeof ActionPayloadSchema>;
 export type TradePayload = z.infer<typeof TradePayloadSchema>;

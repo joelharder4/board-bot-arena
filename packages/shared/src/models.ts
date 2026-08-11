@@ -47,7 +47,6 @@ export interface LobbyPlayer {
   colour: string;
   teamId: number;
   isHost: boolean;
-  isReady: boolean;
 }
 
 export interface MatchPlayer {
