@@ -39,15 +39,25 @@ export interface Match {
   deletedAt?: Date;
 }
 
-export interface LobbyPlayer {
-  type: "user" | "bot";
+interface BaseLobbyPlayer {
   playerId: number;
-  ownerId?: number;
   name: string;
   colour: string;
   teamId: number;
+}
+
+export interface LobbyUser extends BaseLobbyPlayer {
+  type: "user";
+  userId: number;
   isHost: boolean;
 }
+export interface LobbyBot extends BaseLobbyPlayer {
+  type: "bot";
+  botId: number;
+  ownerId: number;
+}
+
+export type LobbyPlayer = LobbyUser | LobbyBot;
 
 export interface MatchPlayer {
   type: "user" | "bot";

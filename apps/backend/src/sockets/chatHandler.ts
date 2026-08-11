@@ -19,7 +19,6 @@ export const registerChatHandlers = (io: Server, socket: Socket) => {
       let cleanText
       if (text.length <= 300) cleanText = filter.clean(text);
       else cleanText = filter.clean(text.substring(0, CHAT_MAX_LENGTH));
-      console.log(`${username}: ${cleanText}`);
       
       const [newLog] = await db.insert(matchLog).values({
         matchId,

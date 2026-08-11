@@ -1,27 +1,13 @@
+import { useEffect, useRef, useState } from "react";
 import { Outlet, useNavigate } from "react-router";
 import { useSocket } from "../providers/useSocket";
 import { Button, Input, message, Tooltip } from "antd";
 import { CopyOutlined, EyeInvisibleOutlined, EyeOutlined, MessageOutlined, RightOutlined, SendOutlined } from "@ant-design/icons";
-import React, { useEffect, useRef, useState } from "react";
 import { type Match, type LobbyPlayer, type MatchDetailsParams, type MatchDetailsResponse, TEAM_MAP, type SendChatPayload, type NewMatchLogPayload, CHAT_MAX_LENGTH } from "@board-bot-arena/shared";
 import { useMatchStore } from "../services/useMatchStore";
 import { api } from "../services/api";
 import { MatchLogContainer } from "./match-log/MatchLogContainer";
-
-// TODO: Move to its own file?
-interface PlayerTagProps {
-  text: string;
-  colour?: string;
-}
-
-const PlayerTag: React.FC<PlayerTagProps> = ({text}: PlayerTagProps) => {
-  return (
-    <span className="px-1.5 py-1 bg-indigo-200 text-[10px] leading-none text-indigo-800 rounded-xs uppercase">
-      {text}
-    </span>
-  );
-}
-
+import PlayerTag from "./ui/PlayerTag";
 
 
 export default function MatchArenaLayout() {
@@ -191,7 +177,8 @@ export default function MatchArenaLayout() {
                 <div className="flex flex-col justify-between">
                   <div className="flex flex-row gap-1.5 items-center">
                     <span className="text-sm font-bold leading-none">{p.name}</span>
-                    {p.isHost && <PlayerTag text="Host"/>}
+                    {p.type === "user" && p.isHost && <PlayerTag text="Host"/>}
+                    {p.type === "bot" && <PlayerTag text="Bot" classes="bg-gray-200 text-gray-900"/>}
                   </div>
                   <span className="text-xs text-gray-600">{TEAM_MAP[p.teamId].name} Team</span>
                 </div>
