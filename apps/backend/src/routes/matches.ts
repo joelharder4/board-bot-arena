@@ -1,5 +1,5 @@
 import express, { type Request, type Response } from 'express';
-import { game, LogType, match, matchLog, MatchLogSchema, matchPlayer, MatchStatus, TEAM_MAP, user, type ApiErrorResponse, type CreateMatchRequest, type CreateMatchResponse, type JoinMatchRequest, type JoinMatchResponse, type LeaveMatchRequest, type LeaveMatchResponse, type LobbyPlayer, type Match, type MatchDetailsParams, type MatchDetailsResponse, type MatchListParams, type MatchListResponse, type MatchLogEvent, type PlayMoveRequest, type PlayMoveResponse } from '@board-bot-arena/shared';
+import { game, LogType, match, matchLog, MatchLogSchema, matchPlayer, MatchStatus, TEAM_MAP, user, type ApiErrorResponse, type CreateMatchRequest, type CreateMatchResponse, type JoinMatchRequest, type JoinMatchResponse, type LeaveMatchRequest, type LeaveMatchResponse, type LobbyPlayer, type Match, type MatchDetailsParams, type MatchDetailsResponse, type MatchListParams, type MatchListResponse, type MatchLogEvent } from '@board-bot-arena/shared';
 import { db } from '../db/index.ts';
 import { and, count, eq, isNull, ne, sql, SQL } from 'drizzle-orm';
 import { generateJoinCode } from '../utils/genCodes.ts';
@@ -140,7 +140,7 @@ router.post('/create', async (
         joinCode
       });
     });
-    
+
   } catch(e) {
     if (e instanceof ApiError) {
       return res.status(e.statusCode).json({ error: e.message });
