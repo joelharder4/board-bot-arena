@@ -87,7 +87,6 @@ export const matchPlayer = pgTable("match_player", {
 export const matchLog = pgTable("match_log", {
   id: serial().primaryKey(),
   matchId: integer("match_id").references(() => match.id, { onDelete: 'cascade' }).notNull(),  
-  matchPlayerId: integer("match_player_id").references(() => matchPlayer.id, { onDelete: 'set null' }),
   type: logTypeEnum().notNull(),
   payload: jsonb().notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),

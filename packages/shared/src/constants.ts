@@ -3,7 +3,7 @@ interface TeamInfo {
   name: string;
   hex: string;
   badgeClass: string;
-}
+};
 
 export const TEAM_MAP: Record<number, TeamInfo> = {
   1: {
@@ -26,4 +26,6 @@ export const TEAM_MAP: Record<number, TeamInfo> = {
     hex: "#eab308",
     badgeClass: "bg-yellow-300"
   }
-}
+};
+
+export const CHAT_MAX_LENGTH = 200;

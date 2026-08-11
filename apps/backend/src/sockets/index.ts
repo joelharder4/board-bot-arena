@@ -2,6 +2,7 @@ import { Server, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { config } from '../env.ts';
 import { registerLobbyHandlers } from './lobbyHandler.ts';
+import { registerChatHandlers } from './chatHandler.ts';
 
 export const setupSocketHandlers = (io: Server) => {
 
@@ -15,6 +16,7 @@ export const setupSocketHandlers = (io: Server) => {
             }
             
             socket.data.userId = decoded.userId;
+            socket.data.name = decoded.name;
             next();
         });
     });
@@ -24,6 +26,7 @@ export const setupSocketHandlers = (io: Server) => {
         console.log(`Client connected: ${socket.id} (UserId: ${userId})`);
 
         registerLobbyHandlers(io, socket);
+        registerChatHandlers(io, socket);
 
         socket.on('disconnect', () => {
             console.log(`Client disconnected: ${socket.id} (UserId: ${userId})`);

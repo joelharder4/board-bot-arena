@@ -1,9 +1,11 @@
 import { z } from "zod";
 import { LogType } from "./models.ts";
+import { CHAT_MAX_LENGTH } from "./constants.ts";
 
 export const ChatPayloadSchema = z.object({
-  text: z.string().min(1).max(300),
-  senderPlayerId: z.number(),
+  userId: z.number(),
+  name: z.string(),
+  text: z.string().min(1).max(CHAT_MAX_LENGTH),
 });
 
 export const SystemPayloadSchema = z.object({
@@ -14,7 +16,7 @@ export const SystemPayloadSchema = z.object({
 export const ActionPayloadSchema = z.object({
   // e.g. "build_road", "move_piece", "roll_dice"
   actionId: z.string(),
-  // e.g. { x: 2, y: 4, type: "road" }
+  // e.g. { q: 2, r: 4, type: "road" }
   data: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -25,21 +27,26 @@ export const TradePayloadSchema = z.object({
   requested: z.record(z.string(), z.number()),
 });
 
-export const MatchLogSchema = z.discriminatedUnion("type", [
+
+export const MatchLogBaseSchema = z.object({
+  id: z.number(),
+  matchId: z.number(),
+  createdAt: z.date(),
+});
+
+export const MatchLogPayloadSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal(LogType.CHAT), payload: ChatPayloadSchema }),
   z.object({ type: z.literal(LogType.SYSTEM), payload: SystemPayloadSchema }),
   z.object({ type: z.literal(LogType.ACTION), payload: ActionPayloadSchema }),
   z.object({ type: z.literal(LogType.TRADE), payload: TradePayloadSchema }),
 ]);
 
-export type LogEventData = z.infer<typeof MatchLogSchema>;
+export const MatchLogSchema = MatchLogBaseSchema.and(MatchLogPayloadSchema);
+
+export type LogEventData = z.infer<typeof MatchLogPayloadSchema>;
+export type MatchLogEvent = z.infer<typeof MatchLogSchema>;
+
 export type SystemPayload = z.infer<typeof SystemPayloadSchema>;
 export type ChatPayload = z.infer<typeof ChatPayloadSchema>;
 export type ActionPayload = z.infer<typeof ActionPayloadSchema>;
 export type TradePayload = z.infer<typeof TradePayloadSchema>;
-
-export type MatchLogEvent = {
-  id: number;
-  matchId: number;
-  createdAt: string;
-} & LogEventData;

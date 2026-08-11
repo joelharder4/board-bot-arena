@@ -1,9 +1,9 @@
 import { Outlet, useNavigate } from "react-router";
 import { useSocket } from "../providers/useSocket";
-import { Button, message, Tooltip } from "antd";
-import { CopyOutlined, EyeInvisibleOutlined, EyeOutlined, MessageOutlined, RightOutlined } from "@ant-design/icons";
+import { Button, Input, message, Tooltip } from "antd";
+import { CopyOutlined, EyeInvisibleOutlined, EyeOutlined, MessageOutlined, RightOutlined, SendOutlined } from "@ant-design/icons";
 import React, { useEffect, useRef, useState } from "react";
-import { type Match, type LobbyPlayer, type MatchDetailsParams, type MatchDetailsResponse, TEAM_MAP } from "@board-bot-arena/shared";
+import { type Match, type LobbyPlayer, type MatchDetailsParams, type MatchDetailsResponse, TEAM_MAP, type SendChatPayload, type NewMatchLogPayload, CHAT_MAX_LENGTH } from "@board-bot-arena/shared";
 import { useMatchStore } from "../services/useMatchStore";
 import { api } from "../services/api";
 import { MatchLogContainer } from "./match-log/MatchLogContainer";
@@ -25,21 +25,22 @@ const PlayerTag: React.FC<PlayerTagProps> = ({text}: PlayerTagProps) => {
 
 
 export default function MatchArenaLayout() {
+  const [unsentMessage, setUnsentMessage] = useState<string>("");
   const [chatOpen, setChatOpen] = useState<boolean>(true);
   const [curMatch, setCurMatch] = useState<Match>(); // maybe move this into useMatchStore
 
   const matchId = useMatchStore((state) => state.matchId);
   const playerList = useMatchStore((state) => state.playerList);
   const setPlayerList = useMatchStore((state) => state.setPlayerList);
-  // const matchLog = useMatchStore((state) => state.matchLog);
   const setMatchLog = useMatchStore((state) => state.setMatchLog);
+  const appendMatchLog = useMatchStore((state) => state.appendMatchLog);
   const clearMatchStore = useMatchStore((state) => state.clearMatch);
 
   const [showCode, setShowCode] = useState<boolean>(false);
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
   const timeoutRef = useRef<number | null>(null);
 
-  const { isConnected } = useSocket();
+  const { isConnected, socket } = useSocket();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -51,7 +52,6 @@ export default function MatchArenaLayout() {
         setPlayerList(res.data.players);
         setMatchLog(res.data.log);
         setCurMatch(res.data.match);
-        console.log(res.data.log);
       } catch {
         message.error('Failed to fetch match details');
         // TODO: retry/leave?
@@ -60,6 +60,19 @@ export default function MatchArenaLayout() {
     
     fetchDetails();
   }, [matchId, setPlayerList, setMatchLog]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewLog = (payload: NewMatchLogPayload) => {
+      appendMatchLog(payload.log);
+    };
+
+    socket.on('new_match_log', handleNewLog);
+    return () => {
+      socket.off('new_match_log', handleNewLog);
+    }
+  }, [socket, appendMatchLog]);
 
   const onLeaveMatch = async () => {
     try {
@@ -84,6 +97,15 @@ export default function MatchArenaLayout() {
       message.error("Failed to Copy");
       console.error(e);
     }
+  };
+
+  const onSendMessage = () => {
+    const trimmed = unsentMessage.trim();
+    if (!trimmed || !socket) return;
+
+    const payload: SendChatPayload = { text: trimmed };
+    socket.emit('send_chat', payload);
+    setUnsentMessage("");
   }
 
   // clean up if the user leaves the page
@@ -198,6 +220,26 @@ export default function MatchArenaLayout() {
             </Button>
           </div>
           <MatchLogContainer />
+          <div className="h-10 w-full flex items-center grow border border-gray-200">
+            <Input
+              variant="borderless"
+              value={unsentMessage}
+              onChange={(e) => setUnsentMessage(e.target.value)}
+              onPressEnter={onSendMessage}
+              maxLength={CHAT_MAX_LENGTH}
+              showCount
+            />
+            <div className="w-px h-4 bg-gray-200"></div>
+            <div className="h-full w-10 flex items-center justify-center">
+              <Button
+                color="default"
+                variant="text"
+                onClick={onSendMessage}
+              >
+                <SendOutlined />
+              </Button>
+            </div>
+          </div>
         </aside>
       </main>
     </div>
