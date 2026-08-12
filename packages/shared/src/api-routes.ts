@@ -32,8 +32,9 @@ When a lobby starts, it creates a new match record and a match_player record for
 */
 
 import { z } from 'zod';
-import type { Bot, LobbyPlayer, Match, MatchStatus, UserRole } from "./models.ts";
+import type { Bot, LobbyPlayer, Match, MatchStatus, User, UserRole } from "./models.ts";
 import type { MatchLogEvent } from './match-logs.ts';
+import { EMAIL_MAX_LENGTH, USERNAME_MAX_LENGTH } from './constants.ts';
 
 export interface ApiErrorResponse {
   error: string;
@@ -44,20 +45,23 @@ export interface ApiErrorResponse {
 
 // POST /api/auth/register
 export const createAccountSchema = z.object({
-  username: z.string("Please enter a username").min(1, "Username is required").max(32, "Username is too long"),
-  email: z.email("Please enter a valid email address").max(254, "Email is too long"),
+  username: z.string("Please enter a username").min(1, "Username is required").max(USERNAME_MAX_LENGTH, "Username is too long"),
+  email: z.email("Please enter a valid email address").max(EMAIL_MAX_LENGTH, "Email is too long"),
   password: z.string("Please enter a password").min(15, "Password must be at least 15 characters long").max(256, "You ain't remembering all that"),
 });
 export type CreateAccountRequest = z.infer<typeof createAccountSchema>;
 export interface CreateAccountResponse {
-  userId: number;
+  user: User;
   token: string;
 }
 
 // POST /api/auth/guest
-export interface CreateGuestRequest {}
+export const createGuestSchema = z.object({
+  name: z.string("Please enter a nickname").min(1, "Nickname is required").max(USERNAME_MAX_LENGTH, "Username is too long"),
+})
+export type CreateGuestRequest = z.infer<typeof createGuestSchema>
 export interface CreateGuestResponse {
-  userId: number;
+  user: User;
   token: string;
 }
 
@@ -68,7 +72,7 @@ export const logInSchema = z.object({
 });
 export type LogInRequest = z.infer<typeof logInSchema>;
 export interface LogInResponse {
-  userId: number;
+  user: User;
   token: string;
 }
 

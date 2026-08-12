@@ -1,9 +1,10 @@
 import express, { type Request, type Response } from 'express';
-import { game, LogType, match, matchLog, MatchLogSchema, matchPlayer, MatchStatus, TEAM_MAP, user, type ApiErrorResponse, type CreateMatchRequest, type CreateMatchResponse, type JoinMatchRequest, type JoinMatchResponse, type LeaveMatchRequest, type LeaveMatchResponse, type LobbyPlayer, type Match, type MatchDetailsParams, type MatchDetailsResponse, type MatchListParams, type MatchListResponse, type MatchLogEvent } from '@board-bot-arena/shared';
+import { game, LogType, match, matchLog, MatchLogSchema, matchPlayer, MatchStatus, TEAM_MAP, user, UserRole, type ApiErrorResponse, type CreateMatchRequest, type CreateMatchResponse, type JoinMatchRequest, type JoinMatchResponse, type LeaveMatchRequest, type LeaveMatchResponse, type LobbyPlayer, type Match, type MatchDetailsParams, type MatchDetailsResponse, type MatchListParams, type MatchListResponse, type MatchLogEvent } from '@board-bot-arena/shared';
 import { db } from '../db/index.ts';
 import { and, count, eq, isNull, ne, sql, SQL } from 'drizzle-orm';
 import { generateJoinCode } from '../utils/genCodes.ts';
 import { ApiError } from '../utils/errors.ts';
+import { requireAuth, requireRoles } from '../middleware/auth.ts';
 
 const router = express.Router();
 
@@ -30,6 +31,9 @@ router.get('/', (
     return res.status(500).json({ error: "Internal server error" });
   }
 });
+
+
+router.use(requireAuth);
 
 
 router.get('/:matchId', async (
@@ -86,63 +90,6 @@ router.get('/:matchId', async (
     res.json({ match: gameMatch, players, log });
   } catch (e) {
     console.error("Creating lobby error:", e);
-    return res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-
-router.post('/create', async (
-  req: Request<{}, any, CreateMatchRequest>,
-  res: Response<CreateMatchResponse | ApiErrorResponse>,
-): Promise<any> => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ error: "User not authenticated" });
-    }
-    const userId = req.user.userId;
-    const joinCode = generateJoinCode();
-
-    await db.transaction(async (tx) => {
-      const [dbMatch] = await tx.insert(match).values({
-        gameId: req.body.gameId,
-        botsOnly: req.body.botsOnly,
-        numPlayers: 1,
-        joinCode,
-      }).returning();
-      if (!dbMatch) throw new ApiError(500, "Failed to create match");
-
-      const [dbMatchPlayer] = await tx.insert(matchPlayer).values({
-        matchId: dbMatch.id,
-        userId,
-        teamIndex: 1,
-        colour: TEAM_MAP[1]?.hex ?? "#676869",
-        isHost: true,
-      }).returning();
-      if (!dbMatchPlayer) throw new ApiError(500, "Failed to add player to match");
-
-      const [newLog] = await tx.insert(matchLog).values({
-        matchId: dbMatch.id,
-        type: LogType.SYSTEM,
-        payload: {
-          message: `${req.user?.name ?? "Unknown"} created the lobby.`,
-          event: "join",
-        }
-      }).returning();
-      if (!newLog) throw new ApiError(500, "Failed to create system log");
-
-      return res.json({
-        matchId: dbMatch.id,
-        playerId: dbMatchPlayer.id,
-        joinCode
-      });
-    });
-
-  } catch(e) {
-    if (e instanceof ApiError) {
-      return res.status(e.statusCode).json({ error: e.message });
-    }
-
-    console.error("Unexpected error in /create: ", e);
     return res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -325,6 +272,65 @@ router.post('/leave', async (
     }
 
     console.error("Unexpected error in /leave: ", e);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+router.use(requireRoles([UserRole.USER, UserRole.ADMIN]));
+
+router.post('/create', async (
+  req: Request<{}, any, CreateMatchRequest>,
+  res: Response<CreateMatchResponse | ApiErrorResponse>,
+): Promise<any> => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: "User not authenticated" });
+    }
+    const userId = req.user.userId;
+    const joinCode = generateJoinCode();
+
+    await db.transaction(async (tx) => {
+      const [dbMatch] = await tx.insert(match).values({
+        gameId: req.body.gameId,
+        botsOnly: req.body.botsOnly,
+        numPlayers: 1,
+        joinCode,
+      }).returning();
+      if (!dbMatch) throw new ApiError(500, "Failed to create match");
+
+      const [dbMatchPlayer] = await tx.insert(matchPlayer).values({
+        matchId: dbMatch.id,
+        userId,
+        teamIndex: 1,
+        colour: TEAM_MAP[1]?.hex ?? "#676869",
+        isHost: true,
+      }).returning();
+      if (!dbMatchPlayer) throw new ApiError(500, "Failed to add player to match");
+
+      const [newLog] = await tx.insert(matchLog).values({
+        matchId: dbMatch.id,
+        type: LogType.SYSTEM,
+        payload: {
+          message: `${req.user?.name ?? "Unknown"} created the lobby.`,
+          event: "join",
+        }
+      }).returning();
+      if (!newLog) throw new ApiError(500, "Failed to create system log");
+
+      return res.json({
+        matchId: dbMatch.id,
+        playerId: dbMatchPlayer.id,
+        joinCode
+      });
+    });
+
+  } catch(e) {
+    if (e instanceof ApiError) {
+      return res.status(e.statusCode).json({ error: e.message });
+    }
+
+    console.error("Unexpected error in /create: ", e);
     return res.status(500).json({ error: "Internal server error" });
   }
 });

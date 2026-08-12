@@ -4,9 +4,12 @@ import { type JoinMatchResponse, type Match } from "@board-bot-arena/shared";
 import { cn } from "../../utils/shadcn";
 import { Button, message } from "antd";
 import FrontiersLobbyImage from "../../assets/frontiers_lobby.png";
-import { api } from "../../services/api";
 import { useNavigate } from "react-router";
 import { useMatchStore } from "../../services/useMatchStore";
+import { joinMatch } from "../../services/matches";
+import { AxiosError } from "axios";
+import { useAuthStore } from "../../services/useAuthStore";
+import { GuestJoinModal } from "./GuestJoinModal";
 
 const styleVariants = {
   large: {
@@ -36,30 +39,50 @@ interface props {
 };
 
 const LobbyCard: React.FC<props> = ({lobby, size, className}: props) => {
+  const userId = useAuthStore((state) => state.user?.userId);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const setMatchId = useMatchStore((state) => state.setMatchId);
   const setPlayerId = useMatchStore((state) => state.setPlayerId);
   const clearMatch = useMatchStore((state) => state.clearMatch);
+
+  const [isGuestModalOpen, setGuestModalOpen] = useState(false);
+
   const navigate = useNavigate();
 
   const styles = styleVariants[size ?? "small"];
 
-  const onTryJoin = async () => {
+  const openGuestModal = () => {
+    setGuestModalOpen(true);
+  }
+
+  const executeJoin = async () => {
     setIsLoading(true);
     try {
-      const res = await api.post<JoinMatchResponse>('/matches/join', { matchId: lobby.matchId });
-      // const playerSlot = res.data.playerSlot;
-      if (!res.data.matchId) throw new Error("Did not receive matchId from the server");
-      setMatchId(res.data.matchId);
-      setPlayerId(res.data.playerId);
-      navigate(`/lobby/${res.data.matchId}`);
-    } catch {
-      clearMatch();
-      message.error("Failed to join lobby");
+      const res: JoinMatchResponse = await joinMatch({ matchId: lobby.matchId });
+      if (!res.matchId) throw new Error("Did not receive matchId from the server");
+
+      setMatchId(res.matchId);
+      setPlayerId(res.playerId);
+      navigate(`/match/${res.matchId}`);
+    } catch(e) {
+      if (e instanceof AxiosError && e.status === 401) { openGuestModal(); }
+      else {
+        clearMatch();
+        message.error("Failed to join lobby");
+      }
     } finally {
       setIsLoading(false);
     }
   };
+
+  const onTryJoinClick = () => {
+    if (!userId) {
+      openGuestModal();
+    } else {
+      executeJoin();
+    }
+  };
+
 
   return (
     <div
@@ -99,13 +122,22 @@ const LobbyCard: React.FC<props> = ({lobby, size, className}: props) => {
           size={styles.buttonSize}
           className="font-semibold shadow-sm"
           disabled={isLoading}
-          onClick={onTryJoin}
+          onClick={onTryJoinClick}
         >
           <span className="min-w-20 text-center inline-block">
             {isLoading ? 'Joining...' : 'Join'}
           </span>
         </Button>
       </div>
+
+      <GuestJoinModal 
+        isOpen={isGuestModalOpen}
+        onClose={() => setGuestModalOpen(false)}
+        matchId={lobby.matchId}
+        onGuestSuccess={() => {
+          executeJoin();
+        }}
+      />
     </div>
   );
 }

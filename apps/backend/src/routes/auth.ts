@@ -26,6 +26,7 @@ router.post('/register',
       }
 
       const { username, email, password } = result.data;
+      // TODO: Use bad-words to filter inappropriate usernames (guests too)
 
       // check for existing account
       const existingUsers = await db.select().from(user).where(eq(user.email, email));
@@ -70,7 +71,15 @@ router.post('/register',
         maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days in milliseconds
       });
 
-      res.json({ userId: newUser.id, token: accessToken });
+      res.json({
+      user: {
+        type: "user",
+        userId: newUser.id,
+        role: UserRole.USER,
+        name: newUser.name,
+      },
+      token: accessToken
+    });
     } catch(e) {
       console.error("Registration error:", e);
       return res.status(500).json({ error: "Internal server error" });
@@ -82,14 +91,14 @@ router.post('/guest', async (
   req: Request<{}, any, CreateGuestRequest>,
   res: Response<CreateGuestResponse | ApiErrorResponse>
 ) => {
-  try {
-    const randomNum = Math.floor(Math.random() * 900) + 100;
+  const { name } = req.body;
 
+  try {
     const [newGuest] = await db.insert(user).values({
-      name: `Guest${randomNum}`,
+      name,
       role: "guest",
     }).returning();
-    if (!newGuest) return res.status(500).json({ error: "Failed to create user account" });
+    if (!newGuest) return res.status(500).json({ error: "Failed to create guest account" });
 
     // JWT generation
     const token = jwt.sign(
@@ -99,10 +108,28 @@ router.post('/guest', async (
           name: newGuest.name,
         },
         config.JWT_ACCESS_SECRET,
-        { expiresIn: '4h' }
+        { expiresIn: '30m' }
+    );
+    const refreshToken = jwt.sign(
+      { userId: newGuest.id },
+      config.JWT_REFRESH_SECRET,
+      { expiresIn: '2d' },
     );
 
-    res.json({ userId: newGuest.id, token: token });
+    await db.insert(session).values({
+      userId: newGuest.id,
+      refreshToken: refreshToken,
+    });
+
+    res.json({
+      user: {
+        type: "user",
+        userId: newGuest.id,
+        role: UserRole.GUEST,
+        name: newGuest.name,
+      },
+      token: token
+    });
   } catch(e) {
     console.error("Registration error:", e);
     return res.status(500).json({ error: "Internal server error" });
@@ -160,7 +187,15 @@ router.post('/login', async (
       maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days in milliseconds
     });
 
-    res.json({ userId: existingUser.id, token: accessToken });
+    res.json({
+      user: {
+        type: "user",
+        userId: existingUser.id,
+        role: existingUser.role as UserRole,
+        name: existingUser.name,
+      },
+      token: accessToken
+    });
   } catch(e) {
     console.error("Registration error:", e);
     return res.status(500).json({ error: "Internal server error" });

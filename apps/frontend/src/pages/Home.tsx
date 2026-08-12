@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
-import { getMatches } from "../services/matches";
+import { getMatches, joinMatch } from "../services/matches";
 import Navbar from "../components/Navbar";
-import { MatchStatus, type CreateMatchRequest, type CreateMatchResponse, type Match } from "@board-bot-arena/shared";
+import { JOIN_CODE_LENGTH, MatchStatus, type CreateMatchRequest, type CreateMatchResponse, type Match } from "@board-bot-arena/shared";
 import Skeleton from "../components/ui/Skeleton";
 import LobbyCard from "../components/ui/LobbyCard";
 import { Button, ConfigProvider, Input, message, Radio } from "antd";
 import { useNavigate } from "react-router";
 import { api } from "../services/api";
 import { useMatchStore } from "../services/useMatchStore";
+import { AxiosError } from "axios";
 
 const Home: React.FC = () => {
   const [matches, setMatches] = useState<Array<Match>>([]);
@@ -17,6 +18,8 @@ const Home: React.FC = () => {
   const setMatchId = useMatchStore((state) => state.setMatchId);
   const setPlayerId = useMatchStore((state) => state.setPlayerId);
   const clearMatch = useMatchStore((state) => state.clearMatch);
+
+  const [joinCode, setJoinCode] = useState<string>("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -49,8 +52,32 @@ const Home: React.FC = () => {
     } catch (err) {
       clearMatch();
       console.error('Error creating a match:\n', err);
-      message.error('Failed to Create Lobby');
+      if (err instanceof AxiosError && err.status === 401) message.error('You need to sign in to create a lobby');
+      else message.error('Failed to Create Lobby');
     } finally {
+      setIsLoading(false);
+    }
+  }
+
+
+  const onTryJoin = async () => {
+    if (joinCode.length !== JOIN_CODE_LENGTH) {
+      message.warning("Invalid Join Code");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const res = await joinMatch({ joinCode: joinCode });
+      if (!res.matchId) throw new Error("Did not receive matchId from the server");
+
+      setMatchId(res.matchId);
+      setPlayerId(res.playerId);
+      navigate(`/match/${res.matchId}`);
+    } catch {
+      clearMatch();
+      message.error("Failed to join lobby");
+    } finally {
+      setJoinCode("");
       setIsLoading(false);
     }
   }
@@ -73,7 +100,7 @@ const Home: React.FC = () => {
                 },
               }}
             >
-              <Radio.Group 
+              <Radio.Group
                 block
                 options={[
                   { label: 'Public', value: 'public' },
@@ -108,11 +135,15 @@ const Home: React.FC = () => {
                 }}
               >
                 <Input
+                  value={joinCode}
+                  onChange={(e) => setJoinCode(e.target.value.trim().toUpperCase())}
+                  onPressEnter={onTryJoin}
                   placeholder="Enter Join Code..."
+                  maxLength={JOIN_CODE_LENGTH}
                 />
                 <Button
                   type="primary"
-                  // onClick={onOpenJoinCode}
+                  onClick={onTryJoin}
                   disabled={isLoading}
                 >
                   Join Match
@@ -125,17 +156,17 @@ const Home: React.FC = () => {
             <div className="col-span-1 row-span-1 lg:col-span-2 lg:row-span-2">
               { isFetching ? <Skeleton className="w-full h-full"/> : 
                 matches.length < 1 ? <>No Open Lobbies Available</> :
-                    <LobbyCard lobby={matches[2]} size="large"/> }
+                  <LobbyCard lobby={matches[0]} size="large"/> }
             </div>
             <div className="col-span-1 row-span-1">
               { isFetching ? <Skeleton className="w-full h-full"/> : 
                 matches.length < 2 ? <></> :
-                    <LobbyCard lobby={matches[1]}/> }
+                  <LobbyCard lobby={matches[1]}/> }
             </div>
             <div className="col-span-1 row-span-1">
               { isFetching ? <Skeleton className="w-full h-full"/> : 
                 matches.length < 3 ? <></> :
-                    <LobbyCard lobby={matches[2]}/> }
+                  <LobbyCard lobby={matches[2]}/> }
             </div>
           </div>
           

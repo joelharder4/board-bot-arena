@@ -14,7 +14,7 @@ const crumbItems = [
 
 const Signup: React.FC = () => {
   const navigate = useNavigate();
-  const setUserId = useAuthStore((state) => state.setUserId);
+  const setUser = useAuthStore((state) => state.setUser);
   const [isLoading, setIsLoading] = useState(false);
   
   const [form] = Form.useForm();
@@ -25,7 +25,7 @@ const Signup: React.FC = () => {
       const validData = createAccountSchema.parse(values);
       const res = await api.post<CreateAccountResponse>('/auth/register', validData, { withCredentials: true });
       setAccessToken(res.data.token);
-      setUserId(res.data.userId);
+      setUser(res.data.user);
       navigate('/');
     } catch(e) {
       if (axios.isAxiosError<ApiErrorResponse>(e)) {

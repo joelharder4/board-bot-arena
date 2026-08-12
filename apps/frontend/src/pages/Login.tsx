@@ -13,7 +13,7 @@ const crumbItems = [
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const setUserId = useAuthStore((state) => state.setUserId);
+  const setUser = useAuthStore((state) => state.setUser);
   const [isLoading, setIsLoading] = useState(false);
   
   const [form] = Form.useForm();
@@ -24,7 +24,7 @@ const Login: React.FC = () => {
       const validData = logInSchema.parse(values);
       const res = await api.post<LogInResponse>('/auth/login', validData);
       setAccessToken(res.data.token);
-      setUserId(res.data.userId);
+      setUser(res.data.user);
       navigate('/');
     } catch {
       message.error("Invalid email or password");

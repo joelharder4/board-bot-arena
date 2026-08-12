@@ -37,14 +37,12 @@ setupSocketHandlers(io);
 /////////////////
 import matchRoutes from './routes/matches.ts';
 import authRoutes from './routes/auth.ts';
-import { requireAuth, requireRoles } from './middleware/auth.ts';
-import { UserRole } from '@board-bot-arena/shared';
 
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Engine is running' });
 });
 
-app.use('/api/matches', requireAuth, requireRoles([UserRole.USER, UserRole.ADMIN]), matchRoutes);
+app.use('/api/matches', matchRoutes);
 app.use('/api/auth', authRoutes);
 
 

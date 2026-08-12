@@ -8,7 +8,7 @@ const MatchLobby: React.FC = () => {
   const [form] = useForm();
   const isHost = useMatchStore((state) => {
     const me = state.playerList.find((p) => p.playerId === state.playerId);
-    return me?.isHost;
+    return me?.type === "user" && me.isHost;
   });
 
   return (

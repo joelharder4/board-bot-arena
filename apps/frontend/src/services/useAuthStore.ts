@@ -1,17 +1,18 @@
+import type { User } from '@board-bot-arena/shared';
 import { create } from 'zustand';
 
 type AuthState = {
   isInitialized: boolean;
-  userId: number | null;
+  user: User | null;
   setIsInitialized: (status: boolean) => void;
-  setUserId: (id: number | null) => void;
+  setUser: (newUser: User | null) => void;
   clearAuth: () => void;
 };
 
 export const useAuthStore = create<AuthState>((set) => ({
   isInitialized: false,
-  userId: null,
+  user: null,
   setIsInitialized: (status) => set({ isInitialized: status }),
-  setUserId: (id) => set({ userId: id }),
-  clearAuth: () => {set({ isInitialized: false, userId: null })}
+  setUser: (newUser) => set({ user: newUser }),
+  clearAuth: () => {set({ user: null })}
 }));

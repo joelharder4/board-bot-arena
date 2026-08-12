@@ -1,6 +1,7 @@
 import { pgTable, pgEnum, serial, text, timestamp, integer, varchar, boolean, check, char, jsonb } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { LogType, MatchStatus, UserRole } from './models.ts';
+import { EMAIL_MAX_LENGTH, USERNAME_MAX_LENGTH } from './constants.ts';
 
 export const rolesEnum = pgEnum(
   "roles",
@@ -24,8 +25,8 @@ const timestamps = {
 
 export const user = pgTable("user", {
   id: serial().primaryKey(),
-  name: text().notNull(),
-  email: text().unique(),
+  name: varchar({ length: USERNAME_MAX_LENGTH }).notNull(),
+  email: varchar({ length: EMAIL_MAX_LENGTH }).unique(),
   role: rolesEnum().default("user").notNull(),
   passwordHash: text(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -33,7 +34,7 @@ export const user = pgTable("user", {
 
 export const session = pgTable("session", {
   id: serial().primaryKey(),
-  userId: integer("user_id").references(() => user.id),
+  userId: integer("user_id").references(() => user.id, { onDelete: 'cascade' }),
   refreshToken: text(),
 });
 

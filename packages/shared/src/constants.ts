@@ -34,3 +34,6 @@ export const TEAM_MAP: Record<number, TeamInfo> = {
 };
 
 export const CHAT_MAX_LENGTH = 200;
+export const USERNAME_MAX_LENGTH = 32;
+export const EMAIL_MAX_LENGTH = 255;
+export const JOIN_CODE_LENGTH = 6;
