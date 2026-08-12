@@ -32,13 +32,13 @@ const styleVariants = {
   }
 };
 
-interface props {
+interface LobbyCardProps {
   lobby: Match;
   size?: keyof typeof styleVariants;
   className?: string | undefined;
 };
 
-const LobbyCard: React.FC<props> = ({lobby, size, className}: props) => {
+const LobbyCard: React.FC<LobbyCardProps> = ({lobby, size, className}: LobbyCardProps) => {
   const userId = useAuthStore((state) => state.user?.userId);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const setMatchId = useMatchStore((state) => state.setMatchId);
@@ -53,7 +53,7 @@ const LobbyCard: React.FC<props> = ({lobby, size, className}: props) => {
 
   const openGuestModal = () => {
     setGuestModalOpen(true);
-  }
+  };
 
   const executeJoin = async () => {
     setIsLoading(true);

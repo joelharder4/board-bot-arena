@@ -9,6 +9,7 @@ import { useNavigate } from "react-router";
 import { api } from "../services/api";
 import { useMatchStore } from "../services/useMatchStore";
 import { AxiosError } from "axios";
+import { EmptyLobbyState } from "../components/ui/EmptyLobbyState";
 
 const Home: React.FC = () => {
   const [matches, setMatches] = useState<Array<Match>>([]);
@@ -152,23 +153,32 @@ const Home: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 auto-rows-[240px]">
-            <div className="col-span-1 row-span-1 lg:col-span-2 lg:row-span-2">
-              { isFetching ? <Skeleton className="w-full h-full"/> : 
-                matches.length < 1 ? <>No Open Lobbies Available</> :
-                  <LobbyCard lobby={matches[0]} size="large"/> }
+          {
+            !isFetching && matches.length === 0 ?
+            <div className="w-full flex justify-center">
+              <EmptyLobbyState onCreateLobby={() => onCreateMatch(isPrivate)}/>
             </div>
-            <div className="col-span-1 row-span-1">
-              { isFetching ? <Skeleton className="w-full h-full"/> : 
-                matches.length < 2 ? <></> :
-                  <LobbyCard lobby={matches[1]}/> }
+             :
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 auto-rows-[240px]">
+              <div className="col-span-1 row-span-1 lg:col-span-2 lg:row-span-2">
+                { isFetching ? <Skeleton className="w-full h-full"/> : 
+                  matches.length >= 1 &&
+                    <LobbyCard lobby={matches[0]} size="large"/> }
+              </div>
+              <div className="col-span-1 row-span-1">
+                { isFetching ? <Skeleton className="w-full h-full"/> : 
+                  matches.length < 2 ? <></> :
+                    <LobbyCard lobby={matches[1]}/> }
+              </div>
+              <div className="col-span-1 row-span-1">
+                { isFetching ? <Skeleton className="w-full h-full"/> : 
+                  matches.length < 3 ? <></> :
+                    <LobbyCard lobby={matches[2]}/> }
+              </div>
             </div>
-            <div className="col-span-1 row-span-1">
-              { isFetching ? <Skeleton className="w-full h-full"/> : 
-                matches.length < 3 ? <></> :
-                  <LobbyCard lobby={matches[2]}/> }
-            </div>
-          </div>
+          }
+          
+          
           
           {/* <div className="max-w-2xl w-[60vw] max-h-96 h-[40vw] flex flex-row gap-4 items-stretch">
             { isFetching || matches.length >= 1 ? <>

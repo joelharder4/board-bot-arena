@@ -8,23 +8,39 @@ import { requireAuth, requireRoles } from '../middleware/auth.ts';
 
 const router = express.Router();
 
-router.get('/', (
+router.get('/', async (
     req: Request<{}, any, any, MatchListParams>,
     res: Response<MatchListResponse | ApiErrorResponse>,
 ) => {
   try {
     const { gameId, userId, botId, status, count } = req.query;
+    
+    const limit = count ? count > 50 ? 50 : count : 3; // max 50
+    const whereClauses: SQL[] = [];
+    if (gameId) whereClauses.push( eq(game.id, gameId) );
+    if (userId) whereClauses.push( eq(matchPlayer.userId, userId) );
+    if (botId)  whereClauses.push( eq(matchPlayer.botId, botId) );
+    if (status) whereClauses.push( eq(match.status, status) );
+    
+    const dbMatches = await db
+      .select()
+      .from(match)
+      .innerJoin(game, eq(game.id, match.gameId))
+      .innerJoin(matchPlayer, eq(matchPlayer.matchId, match.id))
+      .where( and(...whereClauses) )
+      .limit(limit)
+    
+    const payload: MatchListResponse = dbMatches.map((m) => ({
+      matchId: m.match.id,
+      gameId: m.game.id,
+      gameTitle: m.game.name,
+      numPlayers: m.match.numPlayers,
+      maxPlayers: m.game.maxPlayers,
+      status: m.match.status as MatchStatus,
+      createdAt: m.match.createdAt,
+    }));
 
-    const example = {
-      matchId: 6,
-      gameId: 0,
-      gameTitle: "Frontiers",
-      numPlayers: 2,
-      maxPlayers: 4,
-      status: MatchStatus.PENDING,
-      createdAt: new Date(Date.now()),
-    }
-    res.json([example, example, example]);
+    res.json(payload);
 
   } catch(e) {
     console.error("Creating lobby error:", e);

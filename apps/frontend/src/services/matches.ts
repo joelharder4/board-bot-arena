@@ -19,7 +19,7 @@ export const joinMatch = async (payload: JoinMatchRequest): Promise<JoinMatchRes
   if (!payload.joinCode && !payload.matchId) throw new Error("Must include one of joinCode or matchId");
 
   try {
-    const res = await api.post<JoinMatchResponse>('/matches/join', { payload });
+    const res = await api.post<JoinMatchResponse>('/matches/join', payload);
     return res.data;
   } catch(e) {
     if (axios.isAxiosError<ApiErrorResponse>(e)) {
