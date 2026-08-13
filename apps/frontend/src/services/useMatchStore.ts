@@ -24,7 +24,15 @@ export const useMatchStore = create<MatchState>((set) => ({
   setMatchId: (id) => set({ matchId: id }),
   setPlayerId: (id) => set({ playerId: id }),
   setPlayerList: (players) => set({ playerList: players }),
-  appendPlayer: (player) => set((state) => ({ playerList: [...state.playerList, player] })),
+  appendPlayer:
+    (player) => set(
+      (state) => {
+        if (state.playerList.some((p) => p.playerId === player.playerId)) {
+          return state;
+        }
+        return { playerList: [...state.playerList, player] };
+      }
+    ),
   removePlayer:
     (playerId) => set(
       (state) => ({

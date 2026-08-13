@@ -84,7 +84,6 @@ export const matchPlayer = pgTable("match_player", {
   ),
 ]);
 
-
 export const matchLog = pgTable("match_log", {
   id: serial().primaryKey(),
   matchId: integer("match_id").references(() => match.id, { onDelete: 'cascade' }).notNull(),  
@@ -92,3 +91,11 @@ export const matchLog = pgTable("match_log", {
   payload: jsonb().notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export type UserRow = typeof user.$inferSelect;
+export type SessionRow = typeof session.$inferSelect;
+export type GameRow = typeof game.$inferSelect;
+export type BotRow = typeof bot.$inferSelect;
+export type MatchRow = typeof match.$inferSelect;
+export type MatchPlayerRow = typeof matchPlayer.$inferSelect;
+export type MatchLogRow = typeof matchLog.$inferSelect;

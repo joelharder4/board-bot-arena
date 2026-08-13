@@ -25,3 +25,7 @@ export interface PlayerJoinedPayload {
 export interface PlayerLeftPayload {
   playerId: number;
 }
+
+export interface MatchStatePayload {
+  players: LobbyPlayer[];
+}

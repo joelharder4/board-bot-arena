@@ -54,7 +54,6 @@ export interface LobbyUser extends BaseLobbyPlayer {
 export interface LobbyBot extends BaseLobbyPlayer {
   type: "bot";
   botId: number;
-  ownerId: number;
 }
 
 export type LobbyPlayer = LobbyUser | LobbyBot;

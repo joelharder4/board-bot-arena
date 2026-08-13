@@ -9,7 +9,8 @@ import { zodRule } from "../../utils/zodAdapter";
 
 
 interface GuestJoinModalProps {
-  matchId: number | null;
+  matchId?: number | null;
+  joinCode?: string;
   isOpen: boolean;
   onClose: () => void;
   onGuestSuccess: () => void;
@@ -17,6 +18,7 @@ interface GuestJoinModalProps {
 
 export const GuestJoinModal: React.FC<GuestJoinModalProps> = ({
   matchId,
+  joinCode,
   isOpen,
   onClose,
   onGuestSuccess,
@@ -35,7 +37,7 @@ export const GuestJoinModal: React.FC<GuestJoinModalProps> = ({
 
 
   const handlePlayAsGuest = async (values: CreateGuestRequest) => {
-    if (!matchId) return;
+    if (!matchId && !joinCode) return;
     setIsLoading(true);
 
     try {

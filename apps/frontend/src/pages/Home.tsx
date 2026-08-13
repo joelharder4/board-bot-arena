@@ -10,17 +10,21 @@ import { api } from "../services/api";
 import { useMatchStore } from "../services/useMatchStore";
 import { AxiosError } from "axios";
 import { EmptyLobbyState } from "../components/ui/EmptyLobbyState";
+import { GuestJoinModal } from "../components/ui/GuestJoinModal";
+import { useAuthStore } from "../services/useAuthStore";
 
 const Home: React.FC = () => {
   const [matches, setMatches] = useState<Array<Match>>([]);
+  const [joinCode, setJoinCode] = useState<string>("");
   const [isFetching, setIsFetching] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isPrivate, setIsPrivate] = useState<boolean>(false);
+  const [isGuestModalOpen, setGuestModalOpen] = useState(false);
+  const userId = useAuthStore((state) => state.user?.userId);
   const setMatchId = useMatchStore((state) => state.setMatchId);
   const setPlayerId = useMatchStore((state) => state.setPlayerId);
   const clearMatch = useMatchStore((state) => state.clearMatch);
-
-  const [joinCode, setJoinCode] = useState<string>("");
+  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -61,11 +65,8 @@ const Home: React.FC = () => {
   }
 
 
-  const onTryJoin = async () => {
-    if (joinCode.length !== JOIN_CODE_LENGTH) {
-      message.warning("Invalid Join Code");
-      return;
-    }
+  const executeJoin = async () => {
+    
     setIsLoading(true);
     try {
       const res = await joinMatch({ joinCode: joinCode });
@@ -82,6 +83,19 @@ const Home: React.FC = () => {
       setIsLoading(false);
     }
   }
+
+  const onTryJoin = () => {
+    if (joinCode.length !== JOIN_CODE_LENGTH) {
+      message.warning("Invalid Join Code");
+      return;
+    }
+
+    if (!userId) {
+      setGuestModalOpen(true);
+    } else {
+      executeJoin();
+    }
+  };
 
 
   return (
@@ -138,10 +152,24 @@ const Home: React.FC = () => {
                 <Input
                   value={joinCode}
                   onChange={(e) => setJoinCode(e.target.value.trim().toUpperCase())}
-                  onPressEnter={onTryJoin}
+                  onKeyUp={(e) => {
+                    if (e.key === 'Enter') {
+                      onTryJoin();
+                    }
+                  }}
                   placeholder="Enter Join Code..."
                   maxLength={JOIN_CODE_LENGTH}
                 />
+
+                <GuestJoinModal 
+                  isOpen={isGuestModalOpen}
+                  onClose={() => setGuestModalOpen(false)}
+                  joinCode={joinCode}
+                  onGuestSuccess={() => {
+                    executeJoin();
+                  }}
+                />
+
                 <Button
                   type="primary"
                   onClick={onTryJoin}
@@ -177,21 +205,6 @@ const Home: React.FC = () => {
               </div>
             </div>
           }
-          
-          
-          
-          {/* <div className="max-w-2xl w-[60vw] max-h-96 h-[40vw] flex flex-row gap-4 items-stretch">
-            { isFetching || matches.length >= 1 ? <>
-              { isFetching ? <Skeleton className="grow-2 h-full"/> : <LobbyCard lobby={matches[0]} className="grow-2" size="large"/> }
-              { matches.length >= 3 && <div className="flex flex-col min-h-30vh h-full grow gap-2">
-                { isFetching ? <Skeleton className="w-full h-full"/> : <LobbyCard lobby={matches[1]} className="h-1/2 w-full grow"/> }
-                { isFetching ? <Skeleton className="w-full h-full"/> : <LobbyCard lobby={matches[2]} className="h-1/2 w-full grow"/> }
-              </div> }
-            </> : <>
-              no lobbies lmao
-            </>
-            }
-          </div> */}
         </div>
       </div>
     </>

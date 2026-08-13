@@ -28,13 +28,11 @@ router.post('/register',
       const { username, email, password } = result.data;
       // TODO: Use bad-words to filter inappropriate usernames (guests too)
 
-      // check for existing account
       const existingUsers = await db.select().from(user).where(eq(user.email, email));
       if (existingUsers.length > 0) return res.status(409).json({ error: "Email already exists." });
 
       const hashedPassword = await hash(password, 10);
 
-      // insert into db
       const [newUser] = await db.insert(user).values({
         name: username,
         email: email,
@@ -72,14 +70,14 @@ router.post('/register',
       });
 
       res.json({
-      user: {
-        type: "user",
-        userId: newUser.id,
-        role: UserRole.USER,
-        name: newUser.name,
-      },
-      token: accessToken
-    });
+        user: {
+          type: "user",
+          userId: newUser.id,
+          role: UserRole.USER,
+          name: newUser.name,
+        },
+        token: accessToken
+      });
     } catch(e) {
       console.error("Registration error:", e);
       return res.status(500).json({ error: "Internal server error" });
@@ -119,6 +117,13 @@ router.post('/guest', async (
     await db.insert(session).values({
       userId: newGuest.id,
       refreshToken: refreshToken,
+    });
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: config.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 2 * 24 * 60 * 60 * 1000, // 2 days in milliseconds
     });
 
     res.json({

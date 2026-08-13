@@ -51,10 +51,6 @@ const LobbyCard: React.FC<LobbyCardProps> = ({lobby, size, className}: LobbyCard
 
   const styles = styleVariants[size ?? "small"];
 
-  const openGuestModal = () => {
-    setGuestModalOpen(true);
-  };
-
   const executeJoin = async () => {
     setIsLoading(true);
     try {
@@ -65,7 +61,7 @@ const LobbyCard: React.FC<LobbyCardProps> = ({lobby, size, className}: LobbyCard
       setPlayerId(res.playerId);
       navigate(`/match/${res.matchId}`);
     } catch(e) {
-      if (e instanceof AxiosError && e.status === 401) { openGuestModal(); }
+      if (e instanceof AxiosError && e.status === 401) { setGuestModalOpen(true) }
       else {
         clearMatch();
         message.error("Failed to join lobby");
@@ -77,7 +73,7 @@ const LobbyCard: React.FC<LobbyCardProps> = ({lobby, size, className}: LobbyCard
 
   const onTryJoinClick = () => {
     if (!userId) {
-      openGuestModal();
+      setGuestModalOpen(true);
     } else {
       executeJoin();
     }
