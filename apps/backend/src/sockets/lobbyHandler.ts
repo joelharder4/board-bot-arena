@@ -1,7 +1,7 @@
 import { Server, Socket } from 'socket.io';
 import { db } from '../db/index.ts';
-import { match, type JoinLobbyPayload, type LeaveLobbyPayload } from '@board-bot-arena/shared';
-import { eq } from 'drizzle-orm';
+import { matchPlayer, type JoinLobbyPayload, type LeaveLobbyPayload, type LobbyPlayer } from '@board-bot-arena/shared';
+import { and, eq } from 'drizzle-orm';
 
 export const registerLobbyHandlers = (io: Server, socket: Socket) => {
   
@@ -15,9 +15,26 @@ export const registerLobbyHandlers = (io: Server, socket: Socket) => {
     socket.data.matchId = matchId;
     
     try {
-      console.log("joined the room type shi");
-      const [dbMatch] = await db.select().from(match).where(eq(match.id, matchId));
-      // TODO: tell the other players that someone joined
+      const [dbPlayer] = await db
+        .select()
+        .from(matchPlayer)
+        .where(and( 
+          eq(matchPlayer.matchId, matchId),
+          eq(matchPlayer.userId, userId)
+        ));
+      if (!dbPlayer) throw new Error("Player cannot be found");
+      
+      const newPlayer: LobbyPlayer = {
+        type: "user",
+        userId,
+        playerId: dbPlayer.id,
+        name: username,
+        colour: dbPlayer.colour,
+        teamId: dbPlayer.teamIndex,
+        isHost: dbPlayer.isHost,
+      }
+
+      socket.to(roomName).emit("player_joined", { player: newPlayer });
       
     } catch (error) {
       console.error('Failed to join room:', error);

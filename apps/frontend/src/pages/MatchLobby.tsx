@@ -14,7 +14,7 @@ const MatchLobby: React.FC = () => {
   return (
     <div className="flex flex-col bg-gray-100 w-full h-full items-center justify-center">
       <div className="max-w-md w-full h-auto bg-white border border-gray-200 rounded-md shadow-md p-6 md:p-8 flex flex-col items-center">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mb-3">
           <div className="bg-gray-50 w-12 h-12 rounded-xl flex items-center justify-center border border-gray-200 shadow-sm">
             <SettingOutlined className="text-2xl text-gray-600" />
           </div>
@@ -22,7 +22,7 @@ const MatchLobby: React.FC = () => {
         </div>
 
         {!isHost && (
-          <Alert 
+          <Alert
             title="Only the lobby host can modify the match settings."
             type="info"
             showIcon
@@ -31,7 +31,7 @@ const MatchLobby: React.FC = () => {
 
         <Form form={form} layout="vertical" disabled={!isHost} initialValues={{ vp: 10, map: 'random' }}>
           
-          <div className="grid grid-cols-2 gap-4 mt-6">
+          <div className="grid grid-cols-2 gap-4 mt-3">
             <Form.Item
               label={<span className="font-bold">Victory Points</span>}
               name="vp"
@@ -59,7 +59,7 @@ const MatchLobby: React.FC = () => {
             <Button
               type={isHost ? "primary" : "default"}
               size="large"
-              block // Antd prop to make the button take 100% width
+              block
               disabled={!isHost}
               className="font-bold h-12 text-base shadow-sm"
             >

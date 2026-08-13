@@ -3,7 +3,7 @@ import { Outlet, useNavigate } from "react-router";
 import { useSocket } from "../providers/useSocket";
 import { Button, Input, message, Tooltip } from "antd";
 import { CopyOutlined, EyeInvisibleOutlined, EyeOutlined, MessageOutlined, RightOutlined, SendOutlined } from "@ant-design/icons";
-import { type Match, type LobbyPlayer, type MatchDetailsParams, type MatchDetailsResponse, TEAM_MAP, type SendChatPayload, type NewMatchLogPayload, CHAT_MAX_LENGTH } from "@board-bot-arena/shared";
+import { type Match, type LobbyPlayer, type MatchDetailsParams, type MatchDetailsResponse, TEAM_MAP, type SendChatPayload, type NewMatchLogPayload, CHAT_MAX_LENGTH, type PlayerJoinedPayload, type PlayerLeftPayload } from "@board-bot-arena/shared";
 import { useMatchStore } from "../services/useMatchStore";
 import { api } from "../services/api";
 import { MatchLogContainer } from "./match-log/MatchLogContainer";
@@ -18,6 +18,8 @@ export default function MatchArenaLayout() {
   const matchId = useMatchStore((state) => state.matchId);
   const playerList = useMatchStore((state) => state.playerList);
   const setPlayerList = useMatchStore((state) => state.setPlayerList);
+  const appendPlayer = useMatchStore((state) => state.appendPlayer);
+  const removePlayer = useMatchStore((state) => state.removePlayer);
   const setMatchLog = useMatchStore((state) => state.setMatchLog);
   const appendMatchLog = useMatchStore((state) => state.appendMatchLog);
   const clearMatchStore = useMatchStore((state) => state.clearMatch);
@@ -50,15 +52,19 @@ export default function MatchArenaLayout() {
   useEffect(() => {
     if (!socket) return;
 
-    const handleNewLog = (payload: NewMatchLogPayload) => {
-      appendMatchLog(payload.log);
-    };
+    const handleNewLog = (payload: NewMatchLogPayload) => appendMatchLog(payload.log);
+    const handlePlayerJoined = (payload: PlayerJoinedPayload) => appendPlayer(payload.player);
+    const handlePlayerLeft = (payload: PlayerLeftPayload) => removePlayer(payload.playerId);
 
     socket.on('new_match_log', handleNewLog);
+    socket.on('player_joined', handlePlayerJoined);
+    socket.on('player_left', handlePlayerLeft);
     return () => {
       socket.off('new_match_log', handleNewLog);
+      socket.off('player_joined', handlePlayerJoined);
+      socket.off('player_left', handlePlayerLeft);
     }
-  }, [socket, appendMatchLog]);
+  }, [socket, appendMatchLog, appendPlayer, removePlayer]);
 
   const onLeaveMatch = async () => {
     try {

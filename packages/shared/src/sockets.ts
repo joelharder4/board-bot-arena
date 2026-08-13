@@ -1,4 +1,5 @@
 import type { MatchLogEvent } from "./match-logs.ts";
+import type { LobbyPlayer } from "./models.ts";
 
 
 export interface JoinLobbyPayload {
@@ -15,4 +16,12 @@ export interface SendChatPayload {
 
 export interface NewMatchLogPayload {
   log: MatchLogEvent;
+}
+
+export interface PlayerJoinedPayload {
+  player: LobbyPlayer;
+}
+
+export interface PlayerLeftPayload {
+  playerId: number;
 }

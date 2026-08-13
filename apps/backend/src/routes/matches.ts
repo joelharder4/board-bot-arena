@@ -1,7 +1,7 @@
 import express, { type Request, type Response } from 'express';
-import { game, LogType, match, matchLog, MatchLogSchema, matchPlayer, MatchStatus, TEAM_MAP, user, UserRole, type ApiErrorResponse, type CreateMatchRequest, type CreateMatchResponse, type JoinMatchRequest, type JoinMatchResponse, type LeaveMatchRequest, type LeaveMatchResponse, type LobbyPlayer, type Match, type MatchDetailsParams, type MatchDetailsResponse, type MatchListParams, type MatchListResponse, type MatchLogEvent } from '@board-bot-arena/shared';
+import { game, LogType, match, matchLog, MatchLogSchema, matchPlayer, MatchStatus, TEAM_MAP, user, UserRole, type ApiErrorResponse, type CreateMatchRequest, type CreateMatchResponse, type JoinMatchRequest, type JoinMatchResponse, type LeaveMatchRequest, type LeaveMatchResponse, type LobbyPlayer, type Match, type MatchDetailsParams, type MatchDetailsResponse, type MatchListParams, type MatchListResponse, type MatchLogEvent, type NewMatchLogPayload, type PlayerLeftPayload } from '@board-bot-arena/shared';
 import { db } from '../db/index.ts';
-import { and, count, eq, isNull, ne, sql, SQL } from 'drizzle-orm';
+import { and, count, eq, inArray, isNull, ne, sql, SQL } from 'drizzle-orm';
 import { generateJoinCode } from '../utils/genCodes.ts';
 import { ApiError } from '../utils/errors.ts';
 import { requireAuth, requireRoles } from '../middleware/auth.ts';
@@ -17,16 +17,36 @@ router.get('/', async (
     
     const limit = count ? count > 50 ? 50 : count : 3; // max 50
     const whereClauses: SQL[] = [];
+
     if (gameId) whereClauses.push( eq(game.id, gameId) );
-    if (userId) whereClauses.push( eq(matchPlayer.userId, userId) );
-    if (botId)  whereClauses.push( eq(matchPlayer.botId, botId) );
     if (status) whereClauses.push( eq(match.status, status) );
+
+    if (userId) {
+      whereClauses.push(
+        inArray(
+          match.id,
+          db.select({ matchId: matchPlayer.matchId })
+            .from(matchPlayer)
+            .where(eq(matchPlayer.userId, userId))
+        )
+      );
+    }
+    
+    if (botId) {
+      whereClauses.push(
+        inArray(
+          match.id,
+          db.select({ matchId: matchPlayer.matchId })
+            .from(matchPlayer)
+            .where(eq(matchPlayer.botId, botId))
+        )
+      );
+    }
     
     const dbMatches = await db
       .select()
       .from(match)
       .innerJoin(game, eq(game.id, match.gameId))
-      .innerJoin(matchPlayer, eq(matchPlayer.matchId, match.id))
       .where( and(...whereClauses) )
       .limit(limit)
     
@@ -165,14 +185,23 @@ router.post('/join', async (
 
       await tx.update(match).set({ numPlayers: sql`${match.numPlayers} + 1` }).where(eq(match.id, dbMatch.match.id));
 
-      await tx.insert(matchLog).values({
+      const [newLog] = await tx.insert(matchLog).values({
         matchId: dbMatch.match.id,
         type: LogType.SYSTEM,
         payload: {
           message: `${req.user?.name ?? "Unknown"} joined the lobby.`,
           event: "join",
         }
-      });
+      }).returning();
+      if (!newLog) throw new Error("Could not insert newLog");
+      
+      const validatedLog = MatchLogSchema.parse(newLog);
+      const logPayload: NewMatchLogPayload = {
+        log: validatedLog,
+      }
+
+      const io = req.app.get('io');
+      io.to(`match_${matchId}`).emit('new_match_log', logPayload);
 
       return dbMatchPlayer;
     });
@@ -205,7 +234,7 @@ router.post('/leave', async (
     const userId = req.user.userId;
     const { matchId } = req.body;
 
-    await db.transaction(async (tx) => {
+    const txResult = await db.transaction(async (tx) => {
       const [dbMatch] = await tx
         .select()
         .from(match)
@@ -267,18 +296,29 @@ router.post('/leave', async (
         await tx.update(match).set({ status: MatchStatus.ABORTED }).where(eq(match.id, matchId));
       }
 
-      await tx.insert(matchLog).values({
+      const [newLog] = await tx.insert(matchLog).values({
         matchId,
         type: LogType.SYSTEM,
         payload: {
           message: `${req.user?.name ?? "Unknown"} left the match.`,
           event: "leave"
         }
-      });
+      }).returning();
+      if (!newLog) throw new Error("Could not insert newLog");
+
+      return { playerId: dbMatchPlayer.id, newLog };
     });
 
+    if (!txResult) return res.json({});
+    const { playerId, newLog } = txResult;
+
+    const validatedLog = MatchLogSchema.parse(newLog);
+    const logPayload: NewMatchLogPayload = { log: validatedLog };
+    const leftPayload: PlayerLeftPayload = { playerId };
+
     const io = req.app.get('io');
-    io.to(`/matches/${matchId}`).emit('player_left', { userId });
+    io.to(`match_${matchId}`).emit('player_left', leftPayload);
+    io.to(`match_${matchId}`).emit('new_match_log', logPayload);
 
     res.status(200).json({});
     
