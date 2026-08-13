@@ -100,13 +100,13 @@ router.post('/guest', async (
 
     // JWT generation
     const token = jwt.sign(
-        {
-          userId: newGuest.id,
-          role: newGuest.role,
-          name: newGuest.name,
-        },
-        config.JWT_ACCESS_SECRET,
-        { expiresIn: '30m' }
+      {
+        userId: newGuest.id,
+        role: newGuest.role,
+        name: newGuest.name,
+      },
+      config.JWT_ACCESS_SECRET,
+      { expiresIn: '30m' }
     );
     const refreshToken = jwt.sign(
       { userId: newGuest.id },
