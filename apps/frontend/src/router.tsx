@@ -5,7 +5,7 @@ import NotFound from './components/NotFound';
 import Signup from './pages/Signup';
 import { SocketProvider } from './providers/SocketProvider';
 import MatchArenaLayout from './components/MatchArenaLayout';
-import MatchLobby from './pages/MatchLobby';
+import MatchLobby from './pages/Lobby';
 
 export const router = createBrowserRouter([
   { path: '/', element: <Home /> },
