@@ -20,6 +20,7 @@ export default function MatchArenaLayout() {
   const setPlayerList = useMatchStore((state) => state.setPlayerList);
   const appendPlayer = useMatchStore((state) => state.appendPlayer);
   const removePlayer = useMatchStore((state) => state.removePlayer);
+  const setHostPlayer = useMatchStore((state) => state.setHostPlayer);
   const setMatchLog = useMatchStore((state) => state.setMatchLog);
   const appendMatchLog = useMatchStore((state) => state.appendMatchLog);
   const clearMatchStore = useMatchStore((state) => state.clearMatch);
@@ -54,7 +55,10 @@ export default function MatchArenaLayout() {
 
     const handleNewLog = (payload: NewMatchLogPayload) => appendMatchLog(payload.log);
     const handlePlayerJoined = (payload: PlayerJoinedPayload) => appendPlayer(payload.player);
-    const handlePlayerLeft = (payload: PlayerLeftPayload) => removePlayer(payload.playerId);
+    const handlePlayerLeft = (payload: PlayerLeftPayload) => {
+      removePlayer(payload.playerId);
+      if (payload.newHostId) setHostPlayer(payload.newHostId);
+    }
 
     socket.on('new_match_log', handleNewLog);
     socket.on('player_joined', handlePlayerJoined);
@@ -64,7 +68,7 @@ export default function MatchArenaLayout() {
       socket.off('player_joined', handlePlayerJoined);
       socket.off('player_left', handlePlayerLeft);
     }
-  }, [socket, appendMatchLog, appendPlayer, removePlayer]);
+  }, [socket, appendMatchLog, appendPlayer, removePlayer, setHostPlayer]);
 
   const onLeaveMatch = async () => {
     try {

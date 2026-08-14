@@ -3,11 +3,13 @@ import { useMatchStore } from "../services/useMatchStore";
 import { SettingOutlined } from "@ant-design/icons";
 import { Alert, Button, Form, InputNumber, Select, Switch } from "antd";
 import { useForm } from "antd/es/form/Form";
+import { useAuthStore } from "../services/useAuthStore";
 
 const MatchLobby: React.FC = () => {
   const [form] = useForm();
+  const userId = useAuthStore((state) => state.user?.userId);
   const isHost = useMatchStore((state) => {
-    const me = state.playerList.find((p) => p.playerId === state.playerId);
+    const me = state.playerList.find((p) => p.type === "user" && p.userId === userId);
     return me?.type === "user" && me.isHost;
   });
 

@@ -5,7 +5,9 @@ import { api } from '../services/api';
 import { UserRole, type GetMeResponse } from '@board-bot-arena/shared';
 
 const AuthInitializer: React.FC<{children: React.ReactNode}> = ({ children }: { children: React.ReactNode }) => {
-  const { setUser, isInitialized, setIsInitialized } = useAuthStore();
+  const setUser = useAuthStore((state) => state.setUser);
+  const isInitialized = useAuthStore((state) => state.isInitialized);
+  const setIsInitialized = useAuthStore((state) => state.setIsInitialized);
 
   useEffect(() => {
     const verifySession = async () => {

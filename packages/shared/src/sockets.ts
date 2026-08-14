@@ -24,6 +24,7 @@ export interface PlayerJoinedPayload {
 
 export interface PlayerLeftPayload {
   playerId: number;
+  newHostId: number | null;
 }
 
 export interface MatchStatePayload {

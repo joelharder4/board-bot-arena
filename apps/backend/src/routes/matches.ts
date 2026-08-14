@@ -250,6 +250,7 @@ router.post('/leave', async (
         ));
       if (!dbMatchPlayer) throw new ApiError(404, "Player not found");
 
+      let newHostId = null;
       if (dbMatchPlayer.isHost) {
         const [newHost] = await tx
           .select()
@@ -263,8 +264,10 @@ router.post('/leave', async (
           )
           .limit(1);
         
-        if (newHost) await tx.update(matchPlayer).set({ isHost: true }).where(eq( matchPlayer.id, newHost.id ));
-        else if (dbMatch.status === MatchStatus.PENDING) {
+        if (newHost) {
+          await tx.update(matchPlayer).set({ isHost: true }).where(eq( matchPlayer.id, newHost.id ));
+          newHostId = newHost.id;
+        } else if (dbMatch.status === MatchStatus.PENDING) {
           // Delete the whole match because its only bots in a lobby
           // It should cascade to matchPlayers and matchLog
           await tx.delete(match).where(eq(match.id, matchId));
@@ -306,15 +309,15 @@ router.post('/leave', async (
       }).returning();
       if (!newLog) throw new Error("Could not insert newLog");
 
-      return { playerId: dbMatchPlayer.id, newLog };
+      return { playerId: dbMatchPlayer.id, newLog, newHostId };
     });
 
     if (!txResult) return res.json({});
-    const { playerId, newLog } = txResult;
+    const { playerId, newLog, newHostId } = txResult;
 
     const validatedLog = MatchLogSchema.parse(newLog);
     const logPayload: NewMatchLogPayload = { log: validatedLog };
-    const leftPayload: PlayerLeftPayload = { playerId };
+    const leftPayload: PlayerLeftPayload = { playerId, newHostId };
 
     const io = req.app.get('io');
     io.to(`match_${matchId}`).emit('player_left', leftPayload);
@@ -344,12 +347,14 @@ router.post('/create', async (
       return res.status(401).json({ error: "User not authenticated" });
     }
     const userId = req.user.userId;
+    const { gameId, botsOnly, private: isPrivate } = req.body;
     const joinCode = generateJoinCode();
 
     await db.transaction(async (tx) => {
       const [dbMatch] = await tx.insert(match).values({
-        gameId: req.body.gameId,
-        botsOnly: req.body.botsOnly,
+        gameId,
+        botsOnly,
+        isPrivate,
         numPlayers: 1,
         joinCode,
       }).returning();

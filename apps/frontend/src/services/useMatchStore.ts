@@ -11,6 +11,7 @@ type MatchState = {
   setPlayerList: (players: LobbyPlayer[]) => void;
   appendPlayer: (player: LobbyPlayer) => void;
   removePlayer: (playerId: number) => void;
+  setHostPlayer: (playerId: number) => void;
   setMatchLog: (log: MatchLogEvent[]) => void;
   appendMatchLog: (newLog: MatchLogEvent) => void;
   clearMatch: () => void;
@@ -39,6 +40,14 @@ export const useMatchStore = create<MatchState>((set) => ({
         playerList: state.playerList.filter((p) => p.playerId !== playerId)
       })
     ),
+  setHostPlayer: (playerId) => set(
+    (state) => {
+      return { playerList: state.playerList.map((p) => {
+        if (p.type === "user") p.isHost = p.playerId === playerId;
+        return p;
+      }) }
+    }
+  ),
   setMatchLog: (log) => set({ matchLog: log }),
   appendMatchLog: (newLog) => set((state) => ({ matchLog: [...state.matchLog, newLog] })),
   clearMatch: () => {set({ matchId: null, playerId: null, playerList: [], matchLog: [] })}
