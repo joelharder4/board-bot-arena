@@ -3,6 +3,7 @@ import { db } from '../db/index.ts';
 import { bot, matchPlayer, user, type JoinLobbyPayload, type LeaveLobbyPayload, type LobbyPlayer } from '@board-bot-arena/shared';
 import { and, eq } from 'drizzle-orm';
 import { toLobbyPlayer } from '../utils/typing.ts';
+import { disconnectTimeouts } from './index.ts';
 
 export const registerLobbyHandlers = (io: Server, socket: Socket) => {
   
@@ -14,6 +15,12 @@ export const registerLobbyHandlers = (io: Server, socket: Socket) => {
     const roomName = `match_${matchId}`;
     
     try {
+      if (disconnectTimeouts.has(userId)) {
+        // console.log(`User ${userId} reconnected!`);
+        clearTimeout(disconnectTimeouts.get(userId));
+        disconnectTimeouts.delete(userId);
+      }
+
       const [dbPlayer] = await db
         .select()
         .from(matchPlayer)

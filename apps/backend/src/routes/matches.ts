@@ -5,6 +5,7 @@ import { and, count, eq, inArray, isNull, ne, sql, SQL } from 'drizzle-orm';
 import { generateJoinCode } from '../utils/genCodes.ts';
 import { ApiError } from '../utils/errors.ts';
 import { requireAuth, requireRoles } from '../middleware/auth.ts';
+import { handlePlayerRemoval } from '../utils/matchService.ts';
 
 const router = express.Router();
 
@@ -223,115 +224,16 @@ router.post('/join', async (
 
 
 
-router.post('/leave', async (
-  req: Request<{}, any, LeaveMatchRequest>,
-  res: Response<LeaveMatchResponse | ApiErrorResponse>,
-): Promise<any> => {
+router.post('/leave', async (req, res) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: "User not authenticated" });
-    }
-    const userId = req.user.userId;
-    const { matchId } = req.body;
-
-    const txResult = await db.transaction(async (tx) => {
-      const [dbMatch] = await tx
-        .select()
-        .from(match)
-        .where(eq(match.id, matchId));
-      if (!dbMatch) throw new ApiError(404, "Match not found");
-
-      const [dbMatchPlayer] = await tx
-        .select()
-        .from(matchPlayer)
-        .where(and(
-          eq(matchPlayer.userId, userId),
-          eq(matchPlayer.matchId, matchId)
-        ));
-      if (!dbMatchPlayer) throw new ApiError(404, "Player not found");
-
-      let newHostId = null;
-      if (dbMatchPlayer.isHost) {
-        const [newHost] = await tx
-          .select()
-          .from(matchPlayer)
-          .where(
-            and(
-              eq(matchPlayer.matchId, matchId),
-              ne(matchPlayer.userId, userId),
-              isNull(matchPlayer.botId), // bots cannot be hosts
-            )
-          )
-          .limit(1);
-        
-        if (newHost) {
-          await tx.update(matchPlayer).set({ isHost: true }).where(eq( matchPlayer.id, newHost.id ));
-          newHostId = newHost.id;
-        } else if (dbMatch.status === MatchStatus.PENDING) {
-          // Delete the whole match because its only bots in a lobby
-          // It should cascade to matchPlayers and matchLog
-          await tx.delete(match).where(eq(match.id, matchId));
-          return;
-        }
-      }
-
-      if (dbMatch.status === MatchStatus.PENDING) {
-        await tx.delete(matchPlayer).where(and(
-          eq(matchPlayer.id, dbMatchPlayer.id),
-        ));
-
-        await tx.update(match).set({ numPlayers: sql`${match.numPlayers} - 1` }).where(eq(match.id, matchId));
-      } else {
-        await tx.update(matchPlayer).set({ abandoned: true }).where(and(
-          eq(matchPlayer.id, dbMatchPlayer.id),
-        ));
-      }
-
-      const [activePlayers] = await tx
-        .select({ count: count() })
-        .from(matchPlayer)
-        .where(and(
-          eq(matchPlayer.matchId, matchId),
-          eq(matchPlayer.abandoned, false)
-        ));
-
-      if (!activePlayers || activePlayers.count <= 0) {
-        await tx.update(match).set({ status: MatchStatus.ABORTED }).where(eq(match.id, matchId));
-      }
-
-      const [newLog] = await tx.insert(matchLog).values({
-        matchId,
-        type: LogType.SYSTEM,
-        payload: {
-          message: `${req.user?.name ?? "Unknown"} left the match.`,
-          event: "leave"
-        }
-      }).returning();
-      if (!newLog) throw new Error("Could not insert newLog");
-
-      return { playerId: dbMatchPlayer.id, newLog, newHostId };
-    });
-
-    if (!txResult) return res.json({});
-    const { playerId, newLog, newHostId } = txResult;
-
-    const validatedLog = MatchLogSchema.parse(newLog);
-    const logPayload: NewMatchLogPayload = { log: validatedLog };
-    const leftPayload: PlayerLeftPayload = { playerId, newHostId };
-
-    const io = req.app.get('io');
-    io.to(`match_${matchId}`).emit('player_left', leftPayload);
-    io.to(`match_${matchId}`).emit('new_match_log', logPayload);
-
-    res.status(200).json({});
+    if (!req.user) return res.status(401).json({ error: "Unauthenticated" });
     
+    const io = req.app.get('io');
+    await handlePlayerRemoval(req.body.matchId, req.user.userId, io);
+    
+    res.status(200).json({});
   } catch (e) {
-    if (e instanceof ApiError) {
-      return res.status(e.statusCode).json({ error: e.message });
-    }
-
-    console.error("Unexpected error in /leave: ", e);
-    return res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 

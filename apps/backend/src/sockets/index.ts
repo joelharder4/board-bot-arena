@@ -3,6 +3,10 @@ import jwt from 'jsonwebtoken';
 import { config } from '../env.ts';
 import { registerLobbyHandlers } from './lobbyHandler.ts';
 import { registerChatHandlers } from './chatHandler.ts';
+import { handlePlayerRemoval } from '../utils/matchService.ts';
+
+export const disconnectTimeouts = new Map<number, NodeJS.Timeout>();
+const GRACE_PERIOD_MS = 5000;
 
 export const setupSocketHandlers = (io: Server) => {
 
@@ -23,14 +27,20 @@ export const setupSocketHandlers = (io: Server) => {
 
     io.on('connection', (socket: Socket) => {
         const userId = socket.data.userId;
-        console.log(`Client connected: ${socket.id} (UserId: ${userId})`);
 
         registerLobbyHandlers(io, socket);
         registerChatHandlers(io, socket);
 
-        socket.on('disconnect', () => {
-            console.log(`Client disconnected: ${socket.id} (UserId: ${userId})`);
-            // Handle any necessary cleanup (like notifying a lobby that a user dropped)
+        socket.on('disconnect', async () => {
+            const matchId = socket.data.matchId;
+            if (matchId && userId) {
+                const timeout = setTimeout(async () => {
+                    await handlePlayerRemoval(matchId, userId, io);
+                    disconnectTimeouts.delete(userId);
+                }, GRACE_PERIOD_MS);
+
+                disconnectTimeouts.set(userId, timeout);
+            }
         });
     });
 };
