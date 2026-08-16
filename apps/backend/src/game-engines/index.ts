@@ -3,7 +3,6 @@ import { FrontiersEngine } from './frontiers/engine.ts';
 
 const EngineRegistry: Record<string, IGameEngine> = {
   "Frontiers": new FrontiersEngine(),
-  // future games here...
 };
 
 export const getEngine = (gameName: string): IGameEngine => {

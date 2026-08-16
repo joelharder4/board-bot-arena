@@ -1,19 +1,25 @@
-import type { LobbyPlayer, MatchLogEvent } from '@board-bot-arena/shared';
+import type { FrontiersGameState, LobbyPlayer, MatchLogEvent } from '@board-bot-arena/shared';
 import { create } from 'zustand';
 
 type MatchState = {
   matchId: number | null;
+  setMatchId: (id: number | null) => void;
+
   playerId: number | null;
   playerList: LobbyPlayer[];
-  matchLog: MatchLogEvent[];
-  setMatchId: (id: number | null) => void;
   setPlayerId: (id: number | null) => void;
   setPlayerList: (players: LobbyPlayer[]) => void;
   appendPlayer: (player: LobbyPlayer) => void;
   removePlayer: (playerId: number) => void;
   setHostPlayer: (playerId: number) => void;
+
+  matchLog: MatchLogEvent[];
   setMatchLog: (log: MatchLogEvent[]) => void;
   appendMatchLog: (newLog: MatchLogEvent) => void;
+
+  gameState: FrontiersGameState | null;
+  setGameState: (state: FrontiersGameState) => void;
+
   clearMatch: () => void;
 };
 
@@ -50,5 +56,8 @@ export const useMatchStore = create<MatchState>((set) => ({
   ),
   setMatchLog: (log) => set({ matchLog: log }),
   appendMatchLog: (newLog) => set((state) => ({ matchLog: [...state.matchLog, newLog] })),
-  clearMatch: () => {set({ matchId: null, playerId: null, playerList: [], matchLog: [] })}
+
+  gameState: null,
+  setGameState: (state) => {set({ gameState: state })},
+  clearMatch: () => {set({ matchId: null, playerId: null, playerList: [], matchLog: [], gameState: null })},
 }));

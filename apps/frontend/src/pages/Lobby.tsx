@@ -5,13 +5,19 @@ import { Alert, Button, Form, InputNumber, Select, Switch } from "antd";
 import { useForm } from "antd/es/form/Form";
 import { useAuthStore } from "../services/useAuthStore";
 
-const MatchLobby: React.FC = () => {
+const Lobby: React.FC = () => {
   const [form] = useForm();
   const userId = useAuthStore((state) => state.user?.userId);
   const isHost = useMatchStore((state) => {
     const me = state.playerList.find((p) => p.type === "user" && p.userId === userId);
     return me?.type === "user" && me.isHost;
   });
+
+  const startMatch = () => {
+    try {
+
+    }
+  }
 
   return (
     <div className="flex flex-col bg-gray-100 w-full h-full items-center justify-center">
@@ -31,7 +37,7 @@ const MatchLobby: React.FC = () => {
           />
         )}
 
-        <Form form={form} layout="vertical" disabled={!isHost} initialValues={{ vp: 10, map: 'random' }}>
+        <Form form={form} layout="vertical" disabled={!isHost} initialValues={{ vp: 10, map: 'random' }} onSubmitCapture={startMatch}>
           
           <div className="grid grid-cols-2 gap-4 mt-3">
             <Form.Item
@@ -60,6 +66,7 @@ const MatchLobby: React.FC = () => {
           <div className="pt-2">
             <Button
               type={isHost ? "primary" : "default"}
+              htmlType="submit"
               size="large"
               block
               disabled={!isHost}
@@ -74,4 +81,4 @@ const MatchLobby: React.FC = () => {
   );
 }
 
-export default MatchLobby;
+export default Lobby;

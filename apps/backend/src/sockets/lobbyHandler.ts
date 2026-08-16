@@ -29,8 +29,8 @@ export const registerLobbyHandlers = (io: Server, socket: Socket) => {
           eq(matchPlayer.userId, userId)
         ));
       if (!dbPlayer) {
-          socket.emit('action_error', 'You must join this match from the main menu.');
-          return; 
+        socket.emit('action_error', 'You must join this match from the main menu.');
+        return; 
       }
 
       socket.join(roomName);

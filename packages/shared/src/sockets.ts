@@ -30,3 +30,11 @@ export interface PlayerLeftPayload {
 export interface MatchStatePayload {
   players: LobbyPlayer[];
 }
+
+export interface StartMatchPayload {
+  matchId: number;
+}
+
+export interface MatchStartedPayload {
+  state: any;
+}

@@ -5,7 +5,8 @@ import NotFound from './components/NotFound';
 import Signup from './pages/Signup';
 import { SocketProvider } from './providers/SocketProvider';
 import MatchArenaLayout from './components/MatchArenaLayout';
-import MatchLobby from './pages/Lobby';
+import Lobby from './pages/Lobby';
+import Game from './pages/Game';
 
 export const router = createBrowserRouter([
   { path: '/', element: <Home /> },
@@ -20,8 +21,8 @@ export const router = createBrowserRouter([
       </SocketProvider>
     ),
     children: [
-      { index: true, element: <MatchLobby /> },
-      { path: 'play', element: <p>in the game</p> },
+      { index: true, element: <Lobby /> },
+      { path: 'play', element: <Game /> },
     ],
   },
 
