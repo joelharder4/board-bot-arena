@@ -1,21 +1,34 @@
-import React from "react"
+import React, { useState } from "react"
 import { useMatchStore } from "../services/useMatchStore";
 import { SettingOutlined } from "@ant-design/icons";
-import { Alert, Button, Form, InputNumber, Select, Switch } from "antd";
+import { Alert, Button, Form, InputNumber, message, Select, Switch } from "antd";
 import { useForm } from "antd/es/form/Form";
 import { useAuthStore } from "../services/useAuthStore";
+import { useSocket } from "../providers/useSocket";
+import type { StartMatchPayload } from "@board-bot-arena/shared";
 
 const Lobby: React.FC = () => {
   const [form] = useForm();
+  const [isLoading, setLoading] = useState<boolean>(false);
   const userId = useAuthStore((state) => state.user?.userId);
+  const matchId = useMatchStore((state) => state.matchId);
   const isHost = useMatchStore((state) => {
     const me = state.playerList.find((p) => p.type === "user" && p.userId === userId);
     return me?.type === "user" && me.isHost;
   });
+  
+  const { socket } = useSocket();
 
   const startMatch = () => {
+    if (!socket || !matchId) return;
+    setLoading(true);
     try {
-
+      const payload: StartMatchPayload = { matchId }
+      socket.emit('start_game', payload);
+    } catch {
+      message.error("Failed to start game");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -37,7 +50,7 @@ const Lobby: React.FC = () => {
           />
         )}
 
-        <Form form={form} layout="vertical" disabled={!isHost} initialValues={{ vp: 10, map: 'random' }} onSubmitCapture={startMatch}>
+        <Form form={form} layout="vertical" disabled={!isHost || isLoading} initialValues={{ vp: 10, map: 'random' }} onSubmitCapture={startMatch}>
           
           <div className="grid grid-cols-2 gap-4 mt-3">
             <Form.Item
@@ -69,7 +82,7 @@ const Lobby: React.FC = () => {
               htmlType="submit"
               size="large"
               block
-              disabled={!isHost}
+              disabled={!isHost || isLoading}
               className="font-bold h-12 text-base shadow-sm"
             >
               {isHost ? "Start Game" : "Waiting for Host..."}

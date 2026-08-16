@@ -25,7 +25,6 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
         return socket.emit('action_error', { message: "Match has already started" });
       }
 
-
       const players = await db.select().from(matchPlayer).where(eq(matchPlayer.matchId, matchId));
       const playerIds = players.map((p) => p.id);
 
@@ -47,6 +46,5 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
       console.error("Failed to initialize lobby: ", e);
       socket.emit('action_error', { message: "Failed to initialize lobby." })
     }
-
   });
 };
