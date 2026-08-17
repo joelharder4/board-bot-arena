@@ -27,9 +27,9 @@ export interface PlayerLeftPayload {
   newHostId: number | null;
 }
 
-export interface MatchStatePayload {
-  players: LobbyPlayer[];
-}
+// export interface LobbyStatePayload {
+//   players: LobbyPlayer[];
+// }
 
 export interface StartMatchPayload {
   matchId: number;

@@ -3,7 +3,7 @@ import { Outlet, useNavigate } from "react-router";
 import { useSocket } from "../providers/useSocket";
 import { Button, Input, message, Tooltip } from "antd";
 import { CopyOutlined, EyeInvisibleOutlined, EyeOutlined, MessageOutlined, RightOutlined, SendOutlined } from "@ant-design/icons";
-import { type Match, type LobbyPlayer, type MatchDetailsParams, type MatchDetailsResponse, TEAM_MAP, type SendChatPayload, type NewMatchLogPayload, CHAT_MAX_LENGTH, type PlayerJoinedPayload, type PlayerLeftPayload } from "@board-bot-arena/shared";
+import { type Match, type LobbyPlayer, type MatchDetailsParams, type MatchDetailsResponse, TEAM_MAP, type SendChatPayload, type NewMatchLogPayload, CHAT_MAX_LENGTH, type PlayerJoinedPayload, type PlayerLeftPayload, type MatchStartedPayload } from "@board-bot-arena/shared";
 import { useMatchStore } from "../services/useMatchStore";
 import { api } from "../services/api";
 import { MatchLogContainer } from "./match-log/MatchLogContainer";
@@ -24,6 +24,7 @@ export default function MatchArenaLayout() {
   const setMatchLog = useMatchStore((state) => state.setMatchLog);
   const appendMatchLog = useMatchStore((state) => state.appendMatchLog);
   const clearMatchStore = useMatchStore((state) => state.clearMatch);
+  const setGameState = useMatchStore((state) => state.setGameState);
 
   const [showCode, setShowCode] = useState<boolean>(false);
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
@@ -59,16 +60,22 @@ export default function MatchArenaLayout() {
       removePlayer(payload.playerId);
       if (payload.newHostId) setHostPlayer(payload.newHostId);
     }
+    const handleMatchStarted = (payload: MatchStartedPayload) => {
+      setGameState(payload.state);
+      navigate('play', { replace: true });
+    }
 
     socket.on('new_match_log', handleNewLog);
     socket.on('player_joined', handlePlayerJoined);
     socket.on('player_left', handlePlayerLeft);
+    socket.on('match_started', handleMatchStarted);
     return () => {
       socket.off('new_match_log', handleNewLog);
       socket.off('player_joined', handlePlayerJoined);
       socket.off('player_left', handlePlayerLeft);
+      socket.off('match_started', handleMatchStarted);
     }
-  }, [socket, appendMatchLog, appendPlayer, removePlayer, setHostPlayer]);
+  }, [socket, navigate, appendMatchLog, appendPlayer, removePlayer, setHostPlayer, setGameState]);
 
   const onLeaveMatch = async () => {
     try {

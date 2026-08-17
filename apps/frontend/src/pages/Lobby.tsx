@@ -16,7 +16,7 @@ const Lobby: React.FC = () => {
     const me = state.playerList.find((p) => p.type === "user" && p.userId === userId);
     return me?.type === "user" && me.isHost;
   });
-  
+
   const { socket } = useSocket();
 
   const startMatch = () => {
@@ -50,7 +50,7 @@ const Lobby: React.FC = () => {
           />
         )}
 
-        <Form form={form} layout="vertical" disabled={!isHost || isLoading} initialValues={{ vp: 10, map: 'random' }} onSubmitCapture={startMatch}>
+        <Form form={form} layout="vertical" disabled={!isHost || isLoading} initialValues={{ vp: 10, map: 'random' }} onFinish={startMatch}>
           
           <div className="grid grid-cols-2 gap-4 mt-3">
             <Form.Item
