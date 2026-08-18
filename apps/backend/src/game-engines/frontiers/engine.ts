@@ -1,5 +1,5 @@
 import { type IGameEngine } from '../engine-interface.ts';
-import { FrontiersActionSchema, type FrontiersGameState, type ActionPayload } from '@board-bot-arena/shared';
+import { FrontiersActionSchema, type FrontiersGameState, type ActionPayload, Resource, HexType } from '@board-bot-arena/shared';
 
 export class FrontiersEngine implements IGameEngine {
 
@@ -10,11 +10,21 @@ export class FrontiersEngine implements IGameEngine {
   createInitialState(playerIds: number[]): FrontiersGameState {
     if (playerIds.length < 1 || !playerIds[0]) throw new Error("Not enough players");
 
+    const testBoard = [
+      { q: 0, r: 0, type: HexType.DESERT, diceValue: null },
+      { q: 0, r: -1, type: HexType.FOREST, diceValue: 6 },
+      { q: 1, r: -1, type: HexType.QUARRY, diceValue: 3 },
+      { q: 1, r: 0, type: HexType.MOUNTAIN, diceValue: 10 },
+      { q: 0, r: 1, type: HexType.PASTURE, diceValue: 8 },
+      { q: -1, r: 1, type: HexType.FIELD, diceValue: 4 },
+      { q: -1, r: 0, type: HexType.WATER, diceValue: null },
+    ];
+
     return {
        turnPlayerId: playerIds[0],
        phase: "setup",
        board: {
-        hexes: [],
+        hexes: testBoard,
         roads: [],
         buildings: [],
         ports: [],

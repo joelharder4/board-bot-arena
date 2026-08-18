@@ -29,6 +29,16 @@ export enum Resource {
 
 export type FrontiersResourceConfig = Record<Resource, number>;
 
+export enum HexType {
+  FOREST = "forest",
+  QUARRY = "quarry",
+  PASTURE = "pasture",
+  FIELD = "field",
+  MOUNTAIN = "mountain",
+  DESERT = "desert",
+  WATER = "water",
+}
+
 export enum DevCard {
   KNIGHT = "knight",               // 14 in deck
   MONOPOLY = "monopoly",           // 2
@@ -43,7 +53,7 @@ export interface FrontiersGameState {
   turnPlayerId: number;
   phase: "setup" | "roll" | "build" | "robber";
   board: {
-    hexes: Array<{ q: number; r: number; resource: Resource | null; diceValue: number }>;
+    hexes: Array<{ q: number; r: number; type: HexType; diceValue: number | null }>;
     roads: Array<{ ownerId: number; q: number; r: number; edge: HexEdge }>;
     buildings: Array<{ ownerId: number; type: "settlement" | "city"; q: number; r: number; corner: HexCorner }>;
     ports: Array<{ q: number; r: number; corners: HexEdge; tradeRatio: number; resource: Resource | null }>;
