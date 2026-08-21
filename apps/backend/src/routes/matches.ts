@@ -105,7 +105,10 @@ router.get('/:matchId', async (
       .select()
       .from(matchPlayer)
       .innerJoin(user, eq(user.id, matchPlayer.userId))
-      .where(eq(matchPlayer.matchId, matchId));
+      .where(and(
+        eq(matchPlayer.matchId, matchId),
+        eq(matchPlayer.abandoned, false),
+      ));
     
     const players: LobbyPlayer[] = dbPlayers.map((p) => ({
       type: "user",
@@ -124,7 +127,7 @@ router.get('/:matchId', async (
     
     const log: MatchLogEvent[] = dbLog.map((l) => MatchLogSchema.parse(l));
 
-    res.json({ match: gameMatch, players, log });
+    res.json({ match: gameMatch, players, log, state: dbMatch.match.state });
   } catch (e) {
     console.error("Creating lobby error:", e);
     return res.status(500).json({ error: "Internal server error" });

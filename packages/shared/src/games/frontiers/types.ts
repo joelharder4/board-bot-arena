@@ -64,6 +64,7 @@ export interface FrontiersGameState {
     devCards: FrontiersDevelopmentCardConfig;
     victoryPoints: number;
     knightsPlayed: number;
+    maxConnectedRoads: number;
     largestArmy: boolean;
     longestRoad: boolean;
   }>;

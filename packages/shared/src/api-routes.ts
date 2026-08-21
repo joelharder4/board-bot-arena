@@ -153,6 +153,7 @@ export interface MatchDetailsResponse {
   match: Match;
   players: Array<LobbyPlayer>;
   log: Array<MatchLogEvent>;
+  state: any;
 }
 
 // POST /api/matches/join

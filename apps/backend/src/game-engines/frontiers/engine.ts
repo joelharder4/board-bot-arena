@@ -18,6 +18,7 @@ export class FrontiersEngine implements IGameEngine {
       { q: 0, r: 1, type: HexType.PASTURE, diceValue: 8 },
       { q: -1, r: 1, type: HexType.FIELD, diceValue: 4 },
       { q: -1, r: 0, type: HexType.WATER, diceValue: null },
+      { q: 0, r: -2, type: HexType.FIELD, diceValue: 2 },
     ];
 
     return {
@@ -36,6 +37,7 @@ export class FrontiersEngine implements IGameEngine {
           devCards: { knight: 0, monopoly: 0, yearOfPlenty: 0, roadBuilding: 0, victoryPoint: 0 },
           victoryPoints: 0,
           knightsPlayed: 0,
+          maxConnectedRoads: 0,
           largestArmy: false,
           longestRoad: false,
         }])

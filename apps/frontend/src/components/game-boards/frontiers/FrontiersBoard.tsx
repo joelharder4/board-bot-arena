@@ -46,7 +46,7 @@ const FrontiersBoard: React.FC = () => {
   return (
     <svg viewBox={`-${BOARD_RADIUS} -${BOARD_RADIUS} ${BOARD_RADIUS * 2} ${BOARD_RADIUS * 2}`} className="w-full h-full">
       <g id="hex-grid">
-        {!!board && board.hexes.map((hex, index) => {
+        {!!board && board.hexes.map((hex) => {
           const { x, y } = hexToPixel(hex.q, hex.r, HEX_SIZE);
           const corners = getHexCorners(x, y, HEX_SIZE);
           const pointsString = corners.map(c => `${c.x},${c.y}`).join(' ');
@@ -63,12 +63,12 @@ const FrontiersBoard: React.FC = () => {
               {hex.diceValue && (
                 <g>
                   <circle cx={x} cy={y} r={14} fill="#FFE4B5" stroke="#333" strokeWidth="1"/>
-                  <text 
+                  <text
                     x={x} 
                     y={y} 
                     textAnchor="middle" 
                     dominantBaseline="central"
-                    className={`text-xs font-bold ${hex.diceValue === 6 || hex.diceValue === 8 ? 'fill-red-600' : 'fill-black'}`}
+                    className={`text-xs font-bold select-none ${hex.diceValue === 6 || hex.diceValue === 8 ? 'fill-red-600' : 'fill-black'}`}
                   >
                     {hex.diceValue}
                   </text>

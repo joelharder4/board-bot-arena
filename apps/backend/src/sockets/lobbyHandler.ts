@@ -46,16 +46,16 @@ export const registerLobbyHandlers = (io: Server, socket: Socket) => {
         isHost: dbPlayer.isHost,
       }
 
-      const rawPlayers = await db
-        .select()
-        .from(matchPlayer)
-        .leftJoin(user, eq(matchPlayer.userId, user.id))
-        .leftJoin(bot, eq(matchPlayer.botId, bot.id))
-        .where(eq(matchPlayer.matchId, matchId));
+      // const rawPlayers = await db
+      //   .select()
+      //   .from(matchPlayer)
+      //   .leftJoin(user, eq(matchPlayer.userId, user.id))
+      //   .leftJoin(bot, eq(matchPlayer.botId, bot.id))
+      //   .where(eq(matchPlayer.matchId, matchId));
       
-      const allLobbyPlayers: LobbyPlayer[] = toLobbyPlayer(rawPlayers);
+      // const allLobbyPlayers: LobbyPlayer[] = toLobbyPlayer(rawPlayers);
 
-      socket.emit('match_state', { players: allLobbyPlayers });
+      // socket.emit('match_state', { players: allLobbyPlayers });
 
       socket.to(roomName).emit("player_joined", { player: thisPlayer });
       

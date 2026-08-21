@@ -58,9 +58,30 @@ export interface LobbyBot extends BaseLobbyPlayer {
 
 export type LobbyPlayer = LobbyUser | LobbyBot;
 
-export interface MatchPlayer {
-  type: "user" | "bot";
+export interface BaseMatchPlayer {
+  playerId: number;
+  name: string;
+  colour: string;
+  teamId: number;
+  victoryPoints: number;
+  maxConnectedRoads: number;
+  knightsPlayed: number;
+  longestRoad: boolean;
+  largestArmy: boolean;
 }
+
+export interface MatchUser extends BaseMatchPlayer {
+  type: "user";
+  userId: number;
+  isHost: boolean;
+}
+
+export interface MatchBot extends BaseMatchPlayer {
+  type: "bot";
+  botId: number;
+}
+
+export type MatchPlayer = MatchUser | MatchBot;
 
 export enum LogType {
   CHAT = "chat",

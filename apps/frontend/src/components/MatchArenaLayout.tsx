@@ -2,21 +2,20 @@ import { useEffect, useRef, useState } from "react";
 import { Outlet, useNavigate } from "react-router";
 import { useSocket } from "../providers/useSocket";
 import { Button, Input, message, Tooltip } from "antd";
-import { CopyOutlined, EyeInvisibleOutlined, EyeOutlined, MessageOutlined, RightOutlined, SendOutlined } from "@ant-design/icons";
-import { type Match, type LobbyPlayer, type MatchDetailsParams, type MatchDetailsResponse, TEAM_MAP, type SendChatPayload, type NewMatchLogPayload, CHAT_MAX_LENGTH, type PlayerJoinedPayload, type PlayerLeftPayload, type MatchStartedPayload } from "@board-bot-arena/shared";
+import { CopyOutlined, EyeInvisibleOutlined, EyeOutlined, SendOutlined } from "@ant-design/icons";
+import { type Match, type MatchDetailsParams, type MatchDetailsResponse, type SendChatPayload, type NewMatchLogPayload, CHAT_MAX_LENGTH, type PlayerJoinedPayload, type PlayerLeftPayload, type MatchStartedPayload, MatchStatus } from "@board-bot-arena/shared";
 import { useMatchStore } from "../services/useMatchStore";
 import { api } from "../services/api";
 import { MatchLogContainer } from "./match-log/MatchLogContainer";
-import PlayerTag from "./ui/PlayerTag";
+import PlayerListContainer from "./game-boards/frontiers/PlayerListContainer";
 
 
 export default function MatchArenaLayout() {
   const [unsentMessage, setUnsentMessage] = useState<string>("");
-  const [chatOpen, setChatOpen] = useState<boolean>(true);
   const [curMatch, setCurMatch] = useState<Match>(); // maybe move this into useMatchStore
 
   const matchId = useMatchStore((state) => state.matchId);
-  const playerList = useMatchStore((state) => state.playerList);
+  const setMatchStatus = useMatchStore((state) => state.setMatchStatus);
   const setPlayerList = useMatchStore((state) => state.setPlayerList);
   const appendPlayer = useMatchStore((state) => state.appendPlayer);
   const removePlayer = useMatchStore((state) => state.removePlayer);
@@ -42,6 +41,8 @@ export default function MatchArenaLayout() {
         setPlayerList(res.data.players);
         setMatchLog(res.data.log);
         setCurMatch(res.data.match);
+        setMatchStatus(res.data.match.status as MatchStatus);
+        if (res.data.state) setGameState(res.data.state);
       } catch {
         message.error('Failed to fetch match details');
         // TODO: retry/leave?
@@ -49,7 +50,7 @@ export default function MatchArenaLayout() {
     }
     
     fetchDetails();
-  }, [matchId, setPlayerList, setMatchLog]);
+  }, [matchId, setPlayerList, setMatchLog, setGameState, setMatchStatus]);
 
   useEffect(() => {
     if (!socket) return;
@@ -62,6 +63,7 @@ export default function MatchArenaLayout() {
     }
     const handleMatchStarted = (payload: MatchStartedPayload) => {
       setGameState(payload.state);
+      setMatchStatus(MatchStatus.IN_PROGRESS);
       navigate('play', { replace: true });
     }
 
@@ -75,7 +77,7 @@ export default function MatchArenaLayout() {
       socket.off('player_left', handlePlayerLeft);
       socket.off('match_started', handleMatchStarted);
     }
-  }, [socket, navigate, appendMatchLog, appendPlayer, removePlayer, setHostPlayer, setGameState]);
+  }, [socket, navigate, appendMatchLog, appendPlayer, removePlayer, setHostPlayer, setGameState, setMatchStatus]);
 
   const onLeaveMatch = async () => {
     try {
@@ -159,7 +161,7 @@ export default function MatchArenaLayout() {
 
 
         <div className="flex flex-row items-center gap-2">
-          <Button
+          {/* <Button
             color="default"
             variant="text"
             onClick={() => setChatOpen(!chatOpen)}
@@ -167,15 +169,28 @@ export default function MatchArenaLayout() {
             Chat <MessageOutlined />
           </Button>
 
-          <div className="h-6 w-px bg-gray-300 mr-2" />
+          <div className="h-6 w-px bg-gray-300 mr-2" /> */}
 
           <Button danger type="primary" onClick={onLeaveMatch}>Leave Match</Button>
         </div>
       </header>
 
       <main className="flex-1 flex overflow-hidden p-4 gap-4">
-        <div className="w-72 shrink-0 flex flex-col border border-gray-200 bg-white rounded-md">
-          <div className="w-full h-10 rounded-t-md bg-accent items-center flex justify-between px-4">
+        <div className={`overflow-hidden whitespace-nowrap shrink-0 flex flex-col border-gray-200 bg-white rounded-md duration-150 w-72 border`}>
+          <div className="w-full h-10 rounded-t-md bg-accent items-center flex justify-between px-4 border-b">
+            {/* <span className="flex flex-row">
+              <Button
+                color="default"
+                variant="text"
+                size="small"
+                onClick={() => setPlayerListOpen(false)}
+              >
+                <LeftOutlined />
+              </Button>
+              <h3 className="text-sm font-semibold">
+                Players ({curMatch?.numPlayers}/{curMatch?.maxPlayers})
+              </h3>
+            </span> */}
             <h3 className="text-sm font-semibold">
               Players ({curMatch?.numPlayers}/{curMatch?.maxPlayers})
             </h3>
@@ -187,41 +202,20 @@ export default function MatchArenaLayout() {
               + Add Bot
             </Button>
           </div>
-          {playerList.map((p: LobbyPlayer) => {
-            return (
-              <div key={p.playerId} className="border-y border-gray-200 h-16 flex flex-row items-center p-3 gap-3">
-                <div className={`w-8 h-8 rounded-sm ${TEAM_MAP[p.teamId].badgeClass}`}></div>
-                <div className="flex flex-col justify-between">
-                  <div className="flex flex-row gap-1.5 items-center">
-                    <span className="text-sm font-bold leading-none">{p.name}</span>
-                    {p.type === "user" && p.isHost && <PlayerTag text="Host"/>}
-                    {p.type === "bot" && <PlayerTag text="Bot" classes="bg-gray-200 text-gray-900"/>}
-                  </div>
-                  <span className="text-xs text-gray-600">{TEAM_MAP[p.teamId].name} Team</span>
-                </div>
-              </div>
-            );
-          })}
+
+          <PlayerListContainer />
         </div>
 
         <div className="flex-1 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden relative flex flex-col">
           <Outlet />
         </div>
 
-        <aside className={`overflow-hidden whitespace-nowrap shrink-0 flex flex-col border-gray-200 bg-white rounded-md duration-150 ${chatOpen ? "w-80 border" : "w-0 border-0"}`}>
-          <div className="w-full h-10 rounded-t-md bg-accent items-center flex justify-between px-4">
+        <aside className="overflow-hidden whitespace-nowrap shrink-0 flex flex-col border-gray-200 bg-white rounded-md w-80 border">
+          <div className="w-full h-10 rounded-t-md bg-accent items-center flex justify-between px-4 border-b">
             <h3 className="text-sm font-semibold">
               Match Log
               <span className={`inline-block h-2 w-2 mx-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
             </h3>
-            <Button
-              color="default"
-              variant="text"
-              size="small"
-              onClick={() => setChatOpen(false)}
-            >
-              <RightOutlined />
-            </Button>
           </div>
           <MatchLogContainer />
           <div className="h-10 w-full flex items-center grow border border-gray-200">
