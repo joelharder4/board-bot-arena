@@ -22,8 +22,8 @@ const PlayerListContainer: React.FC = () => {
             <div className="flex flex-col justify-between">
               <div className="flex flex-row gap-1.5 items-center">
                 <span className="text-sm font-bold leading-none">{p.name}</span>
-                {p.type === "user" && p.isHost && <PlayerTag text="Host"/>}
-                {p.type === "bot" && <PlayerTag text="Bot" classes="bg-gray-200 text-gray-900"/>}
+                {p.type === "user" && p.isHost && <PlayerTag text="HOST"/>}
+                {p.type === "bot" && <PlayerTag text="BOT" classes="bg-gray-200 text-gray-900"/>}
               </div>
               <span className="text-xs text-gray-600">{TEAM_MAP[p.teamId].name} Team</span>
             </div>
@@ -46,12 +46,14 @@ const PlayerListContainer: React.FC = () => {
               <div className="flex flex-col justify-between">
                 <div className="flex flex-row gap-1.5 items-center">
                   <span className="text-sm font-bold leading-none">{p.name}</span>
-                  {p.type === "user" && p.isHost && <PlayerTag text="Host"/>}
-                  {p.type === "bot" && <PlayerTag text="Bot" classes="bg-gray-200 text-gray-900"/>}
+                  {p.type === "user" && p.isHost && <PlayerTag text="HOST"/>}
+                  {p.type === "bot" && <PlayerTag text="BOT" classes="bg-gray-200 text-gray-900"/>}
+                  {p.abandoned && <PlayerTag text="QUIT" classes="bg-red-200 text-red-900"/>}
                 </div>
                 <span className="text-xs text-gray-600">{TEAM_MAP[p.teamId].name} Team</span>
               </div>
             </div>
+            {/* TODO: Add card count */}
 
             <div className="mt-auto pt-1 flex flex-row items-center justify-between">
               <div className="flex flex-row items-center gap-1.5 text-yellow-700 px-2 py-0.5">

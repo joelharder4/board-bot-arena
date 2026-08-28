@@ -1,7 +1,7 @@
 import express, { type Request, type Response } from 'express';
-import { game, LogType, match, matchLog, MatchLogSchema, matchPlayer, MatchStatus, TEAM_MAP, user, UserRole, type ApiErrorResponse, type CreateMatchRequest, type CreateMatchResponse, type JoinMatchRequest, type JoinMatchResponse, type LeaveMatchRequest, type LeaveMatchResponse, type LobbyPlayer, type Match, type MatchDetailsParams, type MatchDetailsResponse, type MatchListParams, type MatchListResponse, type MatchLogEvent, type NewMatchLogPayload, type PlayerLeftPayload } from '@board-bot-arena/shared';
+import { game, LogType, match, matchLog, MatchLogSchema, matchPlayer, MatchStatus, TEAM_MAP, user, UserRole, type ApiErrorResponse, type CreateMatchRequest, type CreateMatchResponse, type JoinMatchRequest, type JoinMatchResponse, type LobbyPlayer, type Match, type MatchDetailsParams, type MatchDetailsResponse, type MatchListParams, type MatchListResponse, type MatchLogEvent, type NewMatchLogPayload } from '@board-bot-arena/shared';
 import { db } from '../db/index.ts';
-import { and, count, eq, inArray, isNull, ne, sql, SQL } from 'drizzle-orm';
+import { and, eq, inArray, sql, SQL } from 'drizzle-orm';
 import { generateJoinCode } from '../utils/genCodes.ts';
 import { ApiError } from '../utils/errors.ts';
 import { requireAuth, requireRoles } from '../middleware/auth.ts';
@@ -107,7 +107,6 @@ router.get('/:matchId', async (
       .innerJoin(user, eq(user.id, matchPlayer.userId))
       .where(and(
         eq(matchPlayer.matchId, matchId),
-        eq(matchPlayer.abandoned, false),
       ));
     
     const players: LobbyPlayer[] = dbPlayers.map((p) => ({
@@ -117,6 +116,7 @@ router.get('/:matchId', async (
       name: p.match_player.name ?? p.user.name,
       colour: p.match_player.colour,
       teamId: p.match_player.teamIndex,
+      abandoned: p.match_player.abandoned,
       isHost: p.match_player.isHost,
     }));
 

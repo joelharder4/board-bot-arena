@@ -76,7 +76,12 @@ export const handlePlayerRemoval = async (matchId: number, userId: number, io: a
     if (!newLog) throw new Error("Could not insert newLog");
 
     const validatedLog = MatchLogSchema.parse(newLog);
-    io.to(`match_${matchId}`).emit('player_left', { playerId: dbMatchPlayer.id, newHostId });
+    if (dbMatch.status === MatchStatus.PENDING) {
+      io.to(`match_${matchId}`).emit('player_left', { playerId: dbMatchPlayer.id, newHostId });
+    } else {
+      io.to(`match_${matchId}`).emit('player_abandoned', { playerId: dbMatchPlayer.id, newHostId });
+    }
+
     io.to(`match_${matchId}`).emit('new_match_log', { log: validatedLog });
 
     return { playerId: dbMatchPlayer.id, newHostId };

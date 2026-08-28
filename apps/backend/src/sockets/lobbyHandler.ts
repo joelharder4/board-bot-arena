@@ -1,8 +1,7 @@
 import { Server, Socket } from 'socket.io';
 import { db } from '../db/index.ts';
-import { bot, matchPlayer, user, type JoinLobbyPayload, type LeaveLobbyPayload, type LobbyPlayer } from '@board-bot-arena/shared';
+import { matchPlayer, type JoinLobbyPayload, type LeaveLobbyPayload, type LobbyPlayer } from '@board-bot-arena/shared';
 import { and, eq } from 'drizzle-orm';
-import { toLobbyPlayer } from '../utils/typing.ts';
 import { disconnectTimeouts } from './index.ts';
 
 export const registerLobbyHandlers = (io: Server, socket: Socket) => {
@@ -43,19 +42,9 @@ export const registerLobbyHandlers = (io: Server, socket: Socket) => {
         name: username,
         colour: dbPlayer.colour,
         teamId: dbPlayer.teamIndex,
+        abandoned: dbPlayer.abandoned,
         isHost: dbPlayer.isHost,
       }
-
-      // const rawPlayers = await db
-      //   .select()
-      //   .from(matchPlayer)
-      //   .leftJoin(user, eq(matchPlayer.userId, user.id))
-      //   .leftJoin(bot, eq(matchPlayer.botId, bot.id))
-      //   .where(eq(matchPlayer.matchId, matchId));
-      
-      // const allLobbyPlayers: LobbyPlayer[] = toLobbyPlayer(rawPlayers);
-
-      // socket.emit('match_state', { players: allLobbyPlayers });
 
       socket.to(roomName).emit("player_joined", { player: thisPlayer });
       

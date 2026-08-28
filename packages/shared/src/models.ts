@@ -44,6 +44,7 @@ interface BaseLobbyPlayer {
   name: string;
   colour: string;
   teamId: number;
+  abandoned: boolean;
 }
 
 export interface LobbyUser extends BaseLobbyPlayer {

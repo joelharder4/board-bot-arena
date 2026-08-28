@@ -3,7 +3,7 @@ import { Outlet, useNavigate } from "react-router";
 import { useSocket } from "../providers/useSocket";
 import { Button, Input, message, Tooltip } from "antd";
 import { CopyOutlined, EyeInvisibleOutlined, EyeOutlined, SendOutlined } from "@ant-design/icons";
-import { type Match, type MatchDetailsParams, type MatchDetailsResponse, type SendChatPayload, type NewMatchLogPayload, CHAT_MAX_LENGTH, type PlayerJoinedPayload, type PlayerLeftPayload, type MatchStartedPayload, MatchStatus } from "@board-bot-arena/shared";
+import { type Match, type MatchDetailsParams, type MatchDetailsResponse, type SendChatPayload, type NewMatchLogPayload, CHAT_MAX_LENGTH, type PlayerJoinedPayload, type PlayerLeftPayload, type MatchStartedPayload, MatchStatus, type PlayerAbandonedPayload } from "@board-bot-arena/shared";
 import { useMatchStore } from "../services/useMatchStore";
 import { api } from "../services/api";
 import { MatchLogContainer } from "./match-log/MatchLogContainer";
@@ -15,11 +15,13 @@ export default function MatchArenaLayout() {
   const [curMatch, setCurMatch] = useState<Match>(); // maybe move this into useMatchStore
 
   const matchId = useMatchStore((state) => state.matchId);
+  const matchStatus = useMatchStore((state) => state.matchStatus);
   const setMatchStatus = useMatchStore((state) => state.setMatchStatus);
   const setPlayerList = useMatchStore((state) => state.setPlayerList);
   const appendPlayer = useMatchStore((state) => state.appendPlayer);
   const removePlayer = useMatchStore((state) => state.removePlayer);
   const setHostPlayer = useMatchStore((state) => state.setHostPlayer);
+  const setPlayerAbandoned = useMatchStore((state) => state.setPlayerAbandoned);
   const setMatchLog = useMatchStore((state) => state.setMatchLog);
   const appendMatchLog = useMatchStore((state) => state.appendMatchLog);
   const clearMatchStore = useMatchStore((state) => state.clearMatch);
@@ -61,6 +63,10 @@ export default function MatchArenaLayout() {
       removePlayer(payload.playerId);
       if (payload.newHostId) setHostPlayer(payload.newHostId);
     }
+    const handlePlayerAbandoned = (payload: PlayerAbandonedPayload) => {
+      setPlayerAbandoned(payload.playerId);
+      if (payload.newHostId) setHostPlayer(payload.newHostId);
+    }
     const handleMatchStarted = (payload: MatchStartedPayload) => {
       setGameState(payload.state);
       setMatchStatus(MatchStatus.IN_PROGRESS);
@@ -70,14 +76,16 @@ export default function MatchArenaLayout() {
     socket.on('new_match_log', handleNewLog);
     socket.on('player_joined', handlePlayerJoined);
     socket.on('player_left', handlePlayerLeft);
+    socket.on('player_abandoned', handlePlayerAbandoned);
     socket.on('match_started', handleMatchStarted);
     return () => {
       socket.off('new_match_log', handleNewLog);
       socket.off('player_joined', handlePlayerJoined);
       socket.off('player_left', handlePlayerLeft);
+      socket.off('player_abandoned', handlePlayerAbandoned);
       socket.off('match_started', handleMatchStarted);
     }
-  }, [socket, navigate, appendMatchLog, appendPlayer, removePlayer, setHostPlayer, setGameState, setMatchStatus]);
+  }, [socket, navigate, appendMatchLog, appendPlayer, removePlayer, setHostPlayer, setGameState, setMatchStatus, setPlayerAbandoned]);
 
   const onLeaveMatch = async () => {
     try {
@@ -161,16 +169,6 @@ export default function MatchArenaLayout() {
 
 
         <div className="flex flex-row items-center gap-2">
-          {/* <Button
-            color="default"
-            variant="text"
-            onClick={() => setChatOpen(!chatOpen)}
-          >
-            Chat <MessageOutlined />
-          </Button>
-
-          <div className="h-6 w-px bg-gray-300 mr-2" /> */}
-
           <Button danger type="primary" onClick={onLeaveMatch}>Leave Match</Button>
         </div>
       </header>
@@ -178,29 +176,20 @@ export default function MatchArenaLayout() {
       <main className="flex-1 flex overflow-hidden p-4 gap-4">
         <div className={`overflow-hidden whitespace-nowrap shrink-0 flex flex-col border-gray-200 bg-white rounded-md duration-150 w-72 border`}>
           <div className="w-full h-10 rounded-t-md bg-accent items-center flex justify-between px-4 border-b">
-            {/* <span className="flex flex-row">
-              <Button
-                color="default"
-                variant="text"
-                size="small"
-                onClick={() => setPlayerListOpen(false)}
-              >
-                <LeftOutlined />
-              </Button>
-              <h3 className="text-sm font-semibold">
-                Players ({curMatch?.numPlayers}/{curMatch?.maxPlayers})
-              </h3>
-            </span> */}
+
             <h3 className="text-sm font-semibold">
               Players ({curMatch?.numPlayers}/{curMatch?.maxPlayers})
             </h3>
-            <Button
-              color="default"
-              variant="filled"
-              size="small"
-            >
-              + Add Bot
-            </Button>
+            { matchStatus === MatchStatus.PENDING && 
+              <Button
+                color="default"
+                variant="filled"
+                size="small"
+              >
+                + Add Bot
+              </Button>
+            }
+            
           </div>
 
           <PlayerListContainer />
@@ -210,34 +199,47 @@ export default function MatchArenaLayout() {
           <Outlet />
         </div>
 
-        <aside className="overflow-hidden whitespace-nowrap shrink-0 flex flex-col border-gray-200 bg-white rounded-md w-80 border">
-          <div className="w-full h-10 rounded-t-md bg-accent items-center flex justify-between px-4 border-b">
-            <h3 className="text-sm font-semibold">
-              Match Log
-              <span className={`inline-block h-2 w-2 mx-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
-            </h3>
-          </div>
-          <MatchLogContainer />
-          <div className="h-10 w-full flex items-center grow border border-gray-200">
-            <Input
-              variant="borderless"
-              value={unsentMessage}
-              onChange={(e) => setUnsentMessage(e.target.value)}
-              onPressEnter={onSendMessage}
-              maxLength={CHAT_MAX_LENGTH}
-              showCount
-            />
-            <div className="w-px h-4 bg-gray-200"></div>
-            <div className="h-full w-10 flex items-center justify-center">
-              <Button
-                color="default"
-                variant="text"
-                onClick={onSendMessage}
-              >
-                <SendOutlined />
-              </Button>
+        <aside className="flex flex-col w-80 gap-2 shrink-0">
+          <div className="overflow-hidden whitespace-nowrap flex flex-col grow border-gray-200 bg-white rounded-md border">
+            <div className="w-full h-10 rounded-t-md bg-accent items-center flex justify-between px-4 border-b">
+              <h3 className="text-sm font-semibold">
+                Match Log
+                <span className={`inline-block h-2 w-2 mx-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
+              </h3>
+            </div>
+            <MatchLogContainer />
+            <div className="h-10 w-full flex items-center grow border border-gray-200">
+              <Input
+                variant="borderless"
+                value={unsentMessage}
+                onChange={(e) => setUnsentMessage(e.target.value)}
+                onPressEnter={onSendMessage}
+                maxLength={CHAT_MAX_LENGTH}
+                showCount
+              />
+              <div className="w-px h-4 bg-gray-200"></div>
+              <div className="h-full w-10 flex items-center justify-center">
+                <Button
+                  color="default"
+                  variant="text"
+                  onClick={onSendMessage}
+                >
+                  <SendOutlined />
+                </Button>
+              </div>
             </div>
           </div>
+          {matchStatus === MatchStatus.IN_PROGRESS && <div className="">
+            <Button
+              color="primary"
+              variant="solid"
+              block
+              size="large"
+              onClick={() => console.log("end")}
+            >
+              End Turn
+            </Button>
+          </div>}
         </aside>
       </main>
     </div>

@@ -14,6 +14,8 @@ type MatchStoreState = {
   appendPlayer: (player: LobbyPlayer) => void;
   removePlayer: (playerId: number) => void;
   setHostPlayer: (playerId: number) => void;
+  setPlayerAbandoned: (playerId: number) => void;
+  setPlayerReturned: (player: number) => void;
 
   matchLog: MatchLogEvent[];
   setMatchLog: (log: MatchLogEvent[]) => void;
@@ -60,6 +62,19 @@ export const useMatchStore = create<MatchStoreState>((set) => ({
       }) }
     }
   ),
+  setPlayerAbandoned: (playerId: number) => set((state) => {
+    return { playerList: state.playerList.map((p) => {
+      if (p.playerId === playerId) p.abandoned = true;
+      return p;
+    })}
+  }),
+  setPlayerReturned: (playerId: number) => set((state) => {
+    return { playerList: state.playerList.map((p) => {
+      if (p.playerId === playerId) p.abandoned = false;
+      return p;
+    })}
+  }),
+
   setMatchLog: (log) => set({ matchLog: log }),
   appendMatchLog: (newLog) => set((state) => ({ matchLog: [...state.matchLog, newLog] })),
 

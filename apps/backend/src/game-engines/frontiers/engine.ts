@@ -1,5 +1,5 @@
 import { type IGameEngine } from '../engine-interface.ts';
-import { FrontiersActionSchema, type FrontiersGameState, type ActionPayload, Resource, HexType } from '@board-bot-arena/shared';
+import { FrontiersActionSchema, type FrontiersGameState, type ActionPayload, Resource, HexType, HexEdge, HexCorner } from '@board-bot-arena/shared';
 
 export class FrontiersEngine implements IGameEngine {
 
@@ -21,13 +21,28 @@ export class FrontiersEngine implements IGameEngine {
       { q: 0, r: -2, type: HexType.FIELD, diceValue: 2 },
     ];
 
+    const testRoads = [
+      { playerId: playerIds[0], q: 0, r: 0, edge: HexEdge.NE },
+      { playerId: playerIds[0], q: 0, r: 0, edge: HexEdge.E },
+      { playerId: playerIds[0], q: 0, r: 0, edge: HexEdge.SE },
+      { playerId: playerIds[0], q: 0, r: 0, edge: HexEdge.SW },
+      { playerId: playerIds[0], q: 0, r: 0, edge: HexEdge.W },
+      { playerId: playerIds[0], q: 0, r: 0, edge: HexEdge.NW },
+    ];
+
+    const testBuildings = [
+      { playerId: playerIds[0], q: 0, r: 0, corner: HexCorner.N, type: "settlement" as const },
+      { playerId: playerIds[0], q: 0, r: 0, corner: HexCorner.SE, type: "settlement" as const },
+      { playerId: playerIds[0], q: 0, r: 0, corner: HexCorner.SW, type: "city" as const },
+    ];
+
     return {
        turnPlayerId: playerIds[0],
        phase: "setup",
        board: {
         hexes: testBoard,
-        roads: [],
-        buildings: [],
+        roads: testRoads,
+        buildings: testBuildings,
         ports: [],
         robber: { q: 0, r: 0 }
       },

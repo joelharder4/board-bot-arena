@@ -1,19 +1,19 @@
 export enum HexEdge {
-  NE = 0,
-  E  = 1,
-  SE = 2,
-  SW = 3,
-  W  = 4,
-  NW = 5,
+  E  = 0,
+  SE = 1,
+  SW = 2,
+  W  = 3,
+  NW = 4,
+  NE = 5,
 }
 
 export enum HexCorner {
-  N  = 0,
-  NE = 1,
-  SE = 2,
-  S  = 3,
-  SW = 4,
-  NW = 5,
+  NE = 0,
+  SE = 1,
+  S  = 2,
+  SW = 3,
+  NW = 4,
+  N  = 5,
 }
 
 export const ALL_EDGES = [ HexEdge.NE, HexEdge.E, HexEdge.SE, HexEdge.SW, HexEdge.W, HexEdge.NW ] as const;
@@ -54,8 +54,8 @@ export interface FrontiersGameState {
   phase: "setup" | "roll" | "build" | "robber";
   board: {
     hexes: Array<{ q: number; r: number; type: HexType; diceValue: number | null }>;
-    roads: Array<{ ownerId: number; q: number; r: number; edge: HexEdge }>;
-    buildings: Array<{ ownerId: number; type: "settlement" | "city"; q: number; r: number; corner: HexCorner }>;
+    roads: Array<{ playerId: number; q: number; r: number; edge: HexEdge }>;
+    buildings: Array<{ playerId: number; type: "settlement" | "city"; q: number; r: number; corner: HexCorner }>;
     ports: Array<{ q: number; r: number; corners: HexEdge; tradeRatio: number; resource: Resource | null }>;
     robber: { q: number; r: number };
   };

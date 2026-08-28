@@ -27,6 +27,11 @@ export interface PlayerLeftPayload {
   newHostId: number | null;
 }
 
+export interface PlayerAbandonedPayload {
+  playerId: number;
+  newHostId: number | null;
+}
+
 // export interface LobbyStatePayload {
 //   players: LobbyPlayer[];
 // }

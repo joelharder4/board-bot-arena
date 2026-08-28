@@ -1,30 +1,54 @@
 import type React from "react";
 import { useMatchStore } from "../../../services/useMatchStore";
-import { HexType } from "@board-bot-arena/shared";
+import { HexEdge, HexType, TEAM_MAP } from "@board-bot-arena/shared";
+import RoadAsset from "./RoadAsset";
+import SettlementAsset from "./SettlementAsset";
+import CityAsset from "./CityAsset";
 
-const HEX_SIZE = 50; 
+const HEX_SIZE = 50;
+const HEX_SPACING = 2;
 const BOARD_RADIUS = 300;
 
-// 2. Helper: Convert q, r to physical x, y pixels (Pointy-topped hex)
-const hexToPixel = (q: number, r: number, size: number) => {
-  const x = size * Math.sqrt(3) * (q + r / 2);
-  const y = size * (3 / 2) * r;
+const hexToPixel = (q: number, r: number, size: number, spacing: number = HEX_SPACING) => {
+  const x = (size + spacing) * Math.sqrt(3) * (q + r / 2);
+  const y = (size + spacing) * (3 / 2) * r;
   return { x, y };
 };
 
-// 3. Helper: Get the 6 corners of the polygon
 const getHexCorners = (centerX: number, centerY: number, size: number) => {
   const corners = [];
   for (let i = 0; i < 6; i++) {
     // 30 degree offset (Math.PI / 6) for pointy-topped hexes
-    const angle_deg = 60 * i - 30; 
-    const angle_rad = Math.PI / 180 * angle_deg;
+    const angleDeg = 60 * i - 30;
+    const angleRad = Math.PI / 180 * angleDeg;
     corners.push({
-      x: centerX + size * Math.cos(angle_rad),
-      y: centerY + size * Math.sin(angle_rad)
+      x: centerX + size * Math.cos(angleRad),
+      y: centerY + size * Math.sin(angleRad)
     });
   }
   return corners;
+};
+
+const getRoadTransform = (centerX: number, centerY: number, edge: HexEdge, size: number, spacing: number = HEX_SPACING) => {
+  const innerRadius = size * (Math.sqrt(3) / 2);
+  const angleDeg = 60 * edge;
+  const angleRad = Math.PI / 180 * angleDeg;
+
+  return {
+    x: centerX + (spacing + innerRadius) * Math.cos(angleRad),
+    y: centerY + (spacing + innerRadius) * Math.sin(angleRad),
+    rotation: angleDeg + 90
+  };
+}
+
+const getCornerTransform = (centerX: number, centerY: number, size: number, corner: number, spacing: number = HEX_SPACING) => {
+  const angleDeg = 60 * corner - 30;
+  const angleRad = (Math.PI / 180) * angleDeg;
+  
+  const x = centerX + (spacing + size) * Math.cos(angleRad);
+  const y = centerY + (spacing + size) * Math.sin(angleRad);
+  
+  return { x, y };
 };
 
 const getHexColour = (resource: HexType | null) => {
@@ -35,13 +59,14 @@ const getHexColour = (resource: HexType | null) => {
     case HexType.FIELD: return '#FFD700';
     case HexType.MOUNTAIN: return '#708090';
     case HexType.DESERT: return '#D2B48C';
-    case HexType.WATER: return '#1271ff';
+    case HexType.WATER: return '#4797ff';
     default: return '#000000';
   }
 };
 
 const FrontiersBoard: React.FC = () => {
   const board = useMatchStore((state) => state.gameState?.board);
+  const playerList = useMatchStore((state) => state.playerList);
 
   return (
     <svg viewBox={`-${BOARD_RADIUS} -${BOARD_RADIUS} ${BOARD_RADIUS * 2} ${BOARD_RADIUS * 2}`} className="w-full h-full">
@@ -74,6 +99,72 @@ const FrontiersBoard: React.FC = () => {
                   </text>
                 </g>
               )}
+            </g>
+          );
+        })}
+
+        {!!board && board.roads.map((road) => {
+          const { x, y } = hexToPixel(road.q, road.r, HEX_SIZE);
+          const transform = getRoadTransform(x, y, road.edge, HEX_SIZE);
+
+          const roadWidth = HEX_SIZE * 0.9;
+          const roadHeight = HEX_SIZE * 0.15;
+
+          const teamId = playerList[road.playerId]?.teamId ?? 1;
+
+          return (
+            <g
+              key={`road-${road.q}-${road.r}-${road.edge}`}
+              transform={`translate(${transform.x}, ${transform.y}) rotate(${transform.rotation})`}
+            >
+              <RoadAsset
+                width={roadWidth}
+                height={roadHeight}
+                x={-roadWidth / 2}
+                y={-roadHeight / 2}
+                preserveAspectRatio="none"
+                className={`${TEAM_MAP[teamId].strokeClass} ${TEAM_MAP[teamId].fillClass}`}
+              />
+            </g>
+          );
+        })}
+
+        {!!board && board.buildings.map((build) => {
+          const { x, y } = hexToPixel(build.q, build.r, HEX_SIZE);
+          const transform = getCornerTransform(x, y, HEX_SIZE, build.corner);
+
+          const settlementWidth = HEX_SIZE * 0.4;
+          const settlementHeight = HEX_SIZE * 0.5;
+          const cityWidth = HEX_SIZE * 0.6;
+          const cityHeight = HEX_SIZE * 0.6;
+
+          const teamId = playerList[build.playerId]?.teamId ?? 1;
+
+          return (
+            <g
+              key={`building-${build.q}-${build.r}-${build.corner}`}
+              transform={`translate(${transform.x}, ${transform.y})`}
+            >
+              {build.type === "settlement" && 
+                <SettlementAsset
+                  width={settlementWidth}
+                  height={settlementHeight}
+                  x={-settlementWidth / 2}
+                  y={-settlementHeight * 0.6}
+                  preserveAspectRatio="none"
+                  className={`${TEAM_MAP[teamId].strokeClass} ${TEAM_MAP[teamId].fillClass}`}
+                />
+              }
+              {build.type === "city" &&
+                <CityAsset
+                  width={cityWidth}
+                  height={cityHeight}
+                  x={-cityWidth / 2}
+                  y={-cityHeight * 0.65}
+                  preserveAspectRatio="none"
+                  className={`${TEAM_MAP[teamId].strokeClass} ${TEAM_MAP[teamId].fillClass}`}
+                />
+              }
             </g>
           );
         })}
