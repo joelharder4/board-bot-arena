@@ -27,6 +27,8 @@ export default function MatchArenaLayout() {
   const clearMatchStore = useMatchStore((state) => state.clearMatch);
   const setGameState = useMatchStore((state) => state.setGameState);
 
+  const isTurn = useMatchStore((state) => state.playerId === state.gameState?.turnPlayerId);
+
   const [showCode, setShowCode] = useState<boolean>(false);
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
   const timeoutRef = useRef<number | null>(null);
@@ -236,6 +238,7 @@ export default function MatchArenaLayout() {
               block
               size="large"
               onClick={() => console.log("end")}
+              disabled={!isTurn}
             >
               End Turn
             </Button>

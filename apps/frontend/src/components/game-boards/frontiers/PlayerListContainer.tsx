@@ -12,6 +12,7 @@ const PlayerListContainer: React.FC = () => {
   const matchStatus = useMatchStore((state) => state.matchStatus);
   const playerList = useMatchStore((state) => state.playerList);
   const gameStatePlayers = useMatchStore((state) => state.gameState?.players);
+  const turnPlayerId = useMatchStore((state) => state.gameState?.turnPlayerId);
 
   if (matchStatus === MatchStatus.PENDING) {
     return <> {
@@ -42,7 +43,7 @@ const PlayerListContainer: React.FC = () => {
         return (
           <div key={p.playerId} className="border-b border-gray-200 h-20 flex flex-col gap-1 p-3">
             <div className="flex flex-row items-center gap-3">
-              <div className={`w-8 h-8 rounded-sm ${TEAM_MAP[p.teamId].badgeClass}`}></div>
+              <div className={`w-8 h-8 rounded-sm ${TEAM_MAP[p.teamId].badgeClass} ${turnPlayerId === p.playerId && "animate-pulse"}`}></div>
               <div className="flex flex-col justify-between">
                 <div className="flex flex-row gap-1.5 items-center">
                   <span className="text-sm font-bold leading-none">{p.name}</span>
