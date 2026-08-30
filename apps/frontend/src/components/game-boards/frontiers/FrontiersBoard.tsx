@@ -59,7 +59,7 @@ const getHexColour = (resource: HexType | null) => {
     case HexType.FIELD: return '#FFD700';
     case HexType.MOUNTAIN: return '#708090';
     case HexType.DESERT: return '#D2B48C';
-    case HexType.WATER: return '#4797ff';
+    case HexType.WATER: return '#5ca1fa';
     default: return '#000000';
   }
 };
