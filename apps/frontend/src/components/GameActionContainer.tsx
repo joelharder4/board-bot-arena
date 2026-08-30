@@ -1,18 +1,13 @@
-import type React from "react";
-import FrontiersBoard from "../components/game-boards/frontiers/FrontiersBoard";
 import { useMatchStore } from "../services/useMatchStore";
+import { FrontiersActionDock } from "./game-boards/frontiers/FrontiersActionDock";
 
-
-const Game: React.FC = () => {
+export const GameActionContainer = () => {
   const gameTitle = useMatchStore((state) => state.match?.gameTitle);
 
   switch (gameTitle) {
     case "Frontiers":
-      return <FrontiersBoard />;
+      return <FrontiersActionDock />;
     default:
       return <></>;
   }
-  
-}
-
-export default Game;
+};

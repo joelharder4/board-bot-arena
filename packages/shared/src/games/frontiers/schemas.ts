@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const FrontiersBuildActionSchema = z.object({
-  actionId: z.literal("build"),
+  kind: z.literal("build"),
   data: z.object({
     item: z.enum(["road", "settlement", "city"]),
     q: z.number(),
@@ -11,11 +11,11 @@ export const FrontiersBuildActionSchema = z.object({
 });
 
 export const FrontiersRollActionSchema = z.object({
-  actionId: z.literal("roll"),
-  data: z.object({}).optional(),
+  kind: z.literal("roll"),
+  // data: z.object({}).optional(), // TODO: alchemist choosing dice roll
 });
 
-export const FrontiersActionSchema = z.discriminatedUnion("actionId", [
+export const FrontiersActionSchema = z.discriminatedUnion("kind", [
   FrontiersBuildActionSchema,
   FrontiersRollActionSchema,
   // TODO: trade, move robber, etc.

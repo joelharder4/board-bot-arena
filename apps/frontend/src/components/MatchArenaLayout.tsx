@@ -1,21 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import { Outlet, useNavigate } from "react-router";
 import { useSocket } from "../providers/useSocket";
-import { Button, Input, message, Tooltip } from "antd";
+import { Button, Input, message, Skeleton, Tooltip } from "antd";
 import { CopyOutlined, EyeInvisibleOutlined, EyeOutlined, SendOutlined } from "@ant-design/icons";
-import { type Match, type MatchDetailsParams, type MatchDetailsResponse, type SendChatPayload, type NewMatchLogPayload, CHAT_MAX_LENGTH, type PlayerJoinedPayload, type PlayerLeftPayload, type MatchStartedPayload, MatchStatus, type PlayerAbandonedPayload } from "@board-bot-arena/shared";
+import { type MatchDetailsParams, type MatchDetailsResponse, type SendChatPayload, type NewMatchLogPayload, CHAT_MAX_LENGTH, type PlayerJoinedPayload, type PlayerLeftPayload, type MatchStartedPayload, MatchStatus, type PlayerAbandonedPayload, type MatchStateUpdatePayload, type GameEndedPayload } from "@board-bot-arena/shared";
 import { useMatchStore } from "../services/useMatchStore";
 import { api } from "../services/api";
 import { MatchLogContainer } from "./match-log/MatchLogContainer";
 import PlayerListContainer from "./game-boards/frontiers/PlayerListContainer";
+import { GameActionContainer } from "./GameActionContainer";
 
 
 export default function MatchArenaLayout() {
   const [unsentMessage, setUnsentMessage] = useState<string>("");
-  const [curMatch, setCurMatch] = useState<Match>(); // maybe move this into useMatchStore
 
   const matchId = useMatchStore((state) => state.matchId);
   const matchStatus = useMatchStore((state) => state.matchStatus);
+  const match = useMatchStore((state) => state.match);
+  const setMatch = useMatchStore((state) => state.setMatch);
   const setMatchStatus = useMatchStore((state) => state.setMatchStatus);
   const setPlayerList = useMatchStore((state) => state.setPlayerList);
   const appendPlayer = useMatchStore((state) => state.appendPlayer);
@@ -26,9 +28,7 @@ export default function MatchArenaLayout() {
   const appendMatchLog = useMatchStore((state) => state.appendMatchLog);
   const clearMatchStore = useMatchStore((state) => state.clearMatch);
   const setGameState = useMatchStore((state) => state.setGameState);
-
-  const isTurn = useMatchStore((state) => state.playerId === state.gameState?.turnPlayerId);
-
+  
   const [showCode, setShowCode] = useState<boolean>(false);
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
   const timeoutRef = useRef<number | null>(null);
@@ -44,7 +44,7 @@ export default function MatchArenaLayout() {
         const res = await api.get<MatchDetailsResponse>(`/matches/${matchId}`, { params: params });
         setPlayerList(res.data.players);
         setMatchLog(res.data.log);
-        setCurMatch(res.data.match);
+        setMatch(res.data.match);
         setMatchStatus(res.data.match.status as MatchStatus);
         if (res.data.state) setGameState(res.data.state);
       } catch {
@@ -54,7 +54,7 @@ export default function MatchArenaLayout() {
     }
     
     fetchDetails();
-  }, [matchId, setPlayerList, setMatchLog, setGameState, setMatchStatus]);
+  }, [matchId, setPlayerList, setMatchLog, setGameState, setMatchStatus, setMatch]);
 
   useEffect(() => {
     if (!socket) return;
@@ -74,24 +74,33 @@ export default function MatchArenaLayout() {
       setMatchStatus(MatchStatus.IN_PROGRESS);
       navigate('play', { replace: true });
     }
+    const handleStateUpdate = (payload: MatchStateUpdatePayload) => setGameState(payload.state);
+    const handleGameEnd = (payload: GameEndedPayload) => {
+      console.log(`player ${payload.winner} just won!`);
+      setMatchStatus(MatchStatus.COMPLETED);
+    }
 
     socket.on('new_match_log', handleNewLog);
     socket.on('player_joined', handlePlayerJoined);
     socket.on('player_left', handlePlayerLeft);
     socket.on('player_abandoned', handlePlayerAbandoned);
     socket.on('match_started', handleMatchStarted);
+    socket.on('match_state_update', handleStateUpdate);
+    socket.on('game_ended', handleGameEnd);
     return () => {
       socket.off('new_match_log', handleNewLog);
       socket.off('player_joined', handlePlayerJoined);
       socket.off('player_left', handlePlayerLeft);
       socket.off('player_abandoned', handlePlayerAbandoned);
       socket.off('match_started', handleMatchStarted);
+      socket.off('match_state_update', handleStateUpdate);
+      socket.off('game_ended', handleGameEnd);
     }
   }, [socket, navigate, appendMatchLog, appendPlayer, removePlayer, setHostPlayer, setGameState, setMatchStatus, setPlayerAbandoned]);
 
   const onLeaveMatch = async () => {
     try {
-      if (curMatch) await api.post('/matches/leave', { matchId: curMatch.matchId });
+      if (match) await api.post('/matches/leave', { matchId: match.matchId });
     } finally {
       clearMatchStore();
       navigate('/');
@@ -100,7 +109,7 @@ export default function MatchArenaLayout() {
 
   const onCopyJoinCode = async () => {
     try {
-      await navigator.clipboard.writeText(curMatch?.joinCode ?? "");
+      await navigator.clipboard.writeText(match?.joinCode ?? "");
       setCopiedCode(true);
 
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -134,13 +143,13 @@ export default function MatchArenaLayout() {
     <div className="flex flex-col h-screen w-screen bg-accent select-none">
       <header className="flex justify-between items-center p-4 bg-white border-b border-gray-200">
         <div className="divide-x divide-gray-300 flex flex-row items-center">
-          <h1 className="text-xl font-bold pr-4">Game Title</h1>
-          {curMatch?.joinCode &&
+          <h1 className="text-xl font-bold pr-4">{match?.gameTitle ?? <Skeleton.Node active style={{ width: "10vw", height: "calc(var(--spacing) * 8)" }}/>}</h1>
+          {match?.joinCode &&
             <div className="px-4 text-sm text-gray-600 flex flex-row items-center gap-2">
               Code:
               <div className="flex items-center bg-gray-100 border border-gray-200 rounded-md overflow-hidden h-8">
                 <span className={`px-3 text-xs text-gray-700 font-mono font-semibold text-center w-18 select-all ${!showCode && "tracking-[0.2em]"}`}>
-                  {showCode ? curMatch.joinCode : "••••••"}
+                  {showCode ? match.joinCode : "••••••"}
                 </span>
 
                 <div className="flex items-center bg-white border-l border-gray-200 h-full">
@@ -180,7 +189,7 @@ export default function MatchArenaLayout() {
           <div className="w-full h-10 rounded-t-md bg-accent items-center flex justify-between px-4 border-b">
 
             <h3 className="text-sm font-semibold">
-              Players ({curMatch?.numPlayers}/{curMatch?.maxPlayers})
+              Players ({match?.numPlayers}/{match?.maxPlayers})
             </h3>
             { matchStatus === MatchStatus.PENDING && 
               <Button
@@ -233,18 +242,7 @@ export default function MatchArenaLayout() {
               </div>
             </div>
           </div>
-          {matchStatus === MatchStatus.IN_PROGRESS && <div className="">
-            <Button
-              color="primary"
-              variant="solid"
-              block
-              size="large"
-              onClick={() => console.log("end")}
-              disabled={!isTurn}
-            >
-              End Turn
-            </Button>
-          </div>}
+          <GameActionContainer />
         </aside>
       </main>
     </div>

@@ -1,5 +1,5 @@
 import { type IGameEngine } from '../engine-interface.ts';
-import { FrontiersActionSchema, type FrontiersGameState, type ActionPayload, Resource, HexType, HexEdge, HexCorner } from '@board-bot-arena/shared';
+import { FrontiersActionSchema, type FrontiersGameState, type ActionPayload, HexType, HexEdge, HexCorner } from '@board-bot-arena/shared';
 
 export class FrontiersEngine implements IGameEngine {
 
@@ -38,7 +38,7 @@ export class FrontiersEngine implements IGameEngine {
 
     return {
        turnPlayerId: playerIds[0],
-       phase: "setup",
+       phase: "roll",
        board: {
         hexes: testBoard,
         roads: testRoads,
@@ -69,7 +69,7 @@ export class FrontiersEngine implements IGameEngine {
       throw new Error("It is not your turn");
     }
 
-    if (frontiersMove.actionId === "build") {
+    if (frontiersMove.kind === "build") {
       const { item, q, r } = frontiersMove.data;
       
       // ... verify player has enough wood/brick ...
@@ -77,7 +77,7 @@ export class FrontiersEngine implements IGameEngine {
       // ... deduct resources and add to currentState.board.buildings ...
     }
     
-    if (frontiersMove.actionId === "roll") {
+    if (frontiersMove.kind === "roll") {
        // ... roll math random, distribute resources ...
     }
 

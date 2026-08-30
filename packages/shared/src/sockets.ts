@@ -1,3 +1,4 @@
+import type { FrontiersMove } from "./games/frontiers/schemas.ts";
 import type { MatchLogEvent } from "./match-logs.ts";
 import type { LobbyPlayer } from "./models.ts";
 
@@ -42,4 +43,17 @@ export interface StartMatchPayload {
 
 export interface MatchStartedPayload {
   state: any;
+}
+
+export interface MakeActionPayload {
+  matchId: number;
+  action: any;
+}
+
+export interface MatchStateUpdatePayload {
+  state: any;
+}
+
+export interface GameEndedPayload {
+  winner: number;
 }
