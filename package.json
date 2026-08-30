@@ -7,6 +7,10 @@
     "apps/*",
     "packages/*"
   ],
+  "scripts": {
+    "dev:frontend": "npm --prefix apps/frontend run dev",
+    "dev:backend": "npm --prefix apps/backend run dev"
+  },
   "nohoist": [
     "**/react",
     "**/react-dom"
