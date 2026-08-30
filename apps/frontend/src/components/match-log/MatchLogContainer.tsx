@@ -12,7 +12,7 @@ export const MatchLogContainer = () => {
   }, [matchLog, matchStatus]);
 
   return (
-    <div className="flex flex-col h-full w-full rounded-lg overflow-hidden">
+    <div className="flex flex-col h-full w-full rounded-lg overflow-hidden select-text">
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 px-6 flex flex-col gap-1">
         {matchLog.map((log) => (
           <LogEventRouter key={log.id} event={log} />

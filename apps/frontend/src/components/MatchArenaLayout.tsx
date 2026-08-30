@@ -131,7 +131,7 @@ export default function MatchArenaLayout() {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-accent">
+    <div className="flex flex-col h-screen w-screen bg-accent select-none">
       <header className="flex justify-between items-center p-4 bg-white border-b border-gray-200">
         <div className="divide-x divide-gray-300 flex flex-row items-center">
           <h1 className="text-xl font-bold pr-4">Game Title</h1>
@@ -209,7 +209,9 @@ export default function MatchArenaLayout() {
                 <span className={`inline-block h-2 w-2 mx-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
               </h3>
             </div>
+
             <MatchLogContainer />
+            
             <div className="h-10 w-full flex items-center grow border border-gray-200">
               <Input
                 variant="borderless"
