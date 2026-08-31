@@ -1,4 +1,4 @@
-import { game, match, matchPlayer, MatchStatus, type GameEndedPayload, type MakeActionPayload, type MatchStartedPayload, type MatchStateUpdatePayload, type StartMatchPayload } from '@board-bot-arena/shared';
+import { game, match, matchLog, MatchLogSchema, matchPlayer, MatchStatus, type GameEndedPayload, type MakeActionPayload, type MatchLogEvent, type MatchStartedPayload, type MatchStateUpdatePayload, type NewMatchLogPayload, type StartMatchPayload } from '@board-bot-arena/shared';
 import { Server, Socket } from 'socket.io';
 import { db } from '../db/index.ts';
 import { and, eq } from 'drizzle-orm';
@@ -54,41 +54,71 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
       const { matchId, action } = payload;
       const userId = socket.data.userId;
 
-      const [dbMatch] = await db.select().from(match).innerJoin(game, eq(game.id, match.gameId)).where(eq(match.id, matchId));
-      const [dbPlayer] = await db
-        .select()
-        .from(matchPlayer)
-        .where(and(
-          eq(matchPlayer.matchId, matchId),
-          eq(matchPlayer.userId, userId)
-        ));
-      
-      if (!dbMatch || !dbPlayer) {
-        return socket.emit('action_error', { message: "Player is not in that match" });
-      }
+      const txResult = await db.transaction(async (tx) => {
+        const [dbMatch] = await tx.select().from(match).innerJoin(game, eq(game.id, match.gameId)).where(eq(match.id, matchId));
+        const [dbPlayer] = await tx
+          .select()
+          .from(matchPlayer)
+          .where(and(
+            eq(matchPlayer.matchId, matchId),
+            eq(matchPlayer.userId, userId)
+          ));
+        
+        if (!dbMatch || !dbPlayer) throw new Error("Player is not in that match");
+        if (dbMatch.match.status !== MatchStatus.IN_PROGRESS) throw new Error("Match is not in progress");
+        
+        const engine = getEngine(dbMatch.game.name);
+        const parsedAction = engine.parseAction(action);
+        const { newState, generatedLogs } = engine.processAction(dbMatch.match.state, dbPlayer.id, parsedAction);
+        
+        let finalStatus = dbMatch.match.status;
+        const winningPlayer = engine.checkWinCondition(newState);
+        
+        if (winningPlayer) {
+          finalStatus = MatchStatus.COMPLETED;
+          await tx.update(matchPlayer).set({ isWinner: true }).where(eq(matchPlayer.id, winningPlayer));
+        }
 
-      if (dbMatch.match.status !== MatchStatus.IN_PROGRESS) {
-        return socket.emit('action_error', { message: "Match is not in progress" });
-      }
-      
-      const engine = getEngine(dbMatch.game.name);
-      const parsedAction = engine.parseAction(action);
+        await tx.update(match)
+          .set({ state: newState, status: finalStatus })
+          .where(eq(match.id, matchId));
+        
+        const processedLogs: MatchLogEvent[] = [];
+        
+        for (const log of generatedLogs) {
+          const [newLog] = await tx.insert(matchLog).values({
+            matchId,
+            type: log.type,
+            payload: log.payload,
+          }).returning();
+          
+          if (!newLog) throw new Error("Could not insert newLog");
 
-      const newState = engine.processAction(dbMatch.match.state, dbPlayer.id, parsedAction);
-      await db.update(match)
-        .set({ state: newState })
-        .where(eq(match.id, matchId));
-      
-      const updatePayload: MatchStateUpdatePayload = { state: newState };
+          const rawEvent = {
+            id: newLog.id,
+            matchId,
+            createdAt: newLog.createdAt,
+            type: newLog.type,
+            payload: newLog.payload,
+          };
+
+          processedLogs.push(MatchLogSchema.parse(rawEvent));
+        }
+
+        return { newState, processedLogs, winningPlayer };
+      });
+
+      const updatePayload: MatchStateUpdatePayload = { state: txResult.newState };
       io.to(`match_${matchId}`).emit('match_state_update', updatePayload);
 
-      const winningPlayer = engine.checkWinCondition(newState);
-      if (winningPlayer) {
-        console.log(`HOLY MOLY PLAYER ${winningPlayer} JUST WON!!`);
-        await db.update(match).set({ status: MatchStatus.COMPLETED }).where(eq(match.id, matchId));
-        await db.update(matchPlayer).set({ isWinner: true }).where(eq(matchPlayer.id, winningPlayer));
+      for (const validLog of txResult.processedLogs) {
+        const logPayload: NewMatchLogPayload = { log: validLog };
+        io.to(`match_${matchId}`).emit("new_match_log", logPayload);
+      }
 
-        const endPayload: GameEndedPayload = { winner: winningPlayer }
+      if (txResult.winningPlayer) {
+        console.log(`HOLY MOLY PLAYER ${txResult.winningPlayer} JUST WON!!`);
+        const endPayload: GameEndedPayload = { winner: txResult.winningPlayer };
         io.to(`match_${matchId}`).emit('game_ended', endPayload);
       }
 

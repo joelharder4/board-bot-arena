@@ -1,7 +1,8 @@
 import { z } from "zod";
+import { Resource } from "./types.ts";
 
 export const FrontiersBuildActionSchema = z.object({
-  kind: z.literal("build"),
+  actionId: z.literal("build"),
   data: z.object({
     item: z.enum(["road", "settlement", "city"]),
     q: z.number(),
@@ -10,15 +11,34 @@ export const FrontiersBuildActionSchema = z.object({
   }),
 });
 
-export const FrontiersRollActionSchema = z.object({
-  kind: z.literal("roll"),
-  // data: z.object({}).optional(), // TODO: alchemist choosing dice roll
+export const FrontiersRollRequestSchema = z.object({
+  actionId: z.literal("roll"),
 });
 
-export const FrontiersActionSchema = z.discriminatedUnion("kind", [
+export const FrontiersActionSchema = z.discriminatedUnion("actionId", [
   FrontiersBuildActionSchema,
-  FrontiersRollActionSchema,
+  FrontiersRollRequestSchema,
   // TODO: trade, move robber, etc.
 ]);
 
 export type FrontiersMove = z.infer<typeof FrontiersActionSchema>;
+
+export const FrontiersRollLogSchema = z.object({
+  actionId: z.literal("roll"),
+  data: z.object({
+    die1: z.number(),
+    die2: z.number(),
+    total: z.number()
+  })
+});
+
+export const FrontiersPickupLogSchema = z.object({
+  actionId: z.literal("pickup"),
+  data: z.object({
+    playerId: z.number(),
+    resources: z.record(
+      z.enum(Resource),
+      z.number()
+    ),
+  })
+});

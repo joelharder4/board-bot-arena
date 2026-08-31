@@ -1,13 +1,14 @@
 import { Button } from "antd";
 import { useMatchStore } from "../../../services/useMatchStore";
 import { GiRollingDices } from "react-icons/gi";
-import type { FrontiersMove } from "@board-bot-arena/shared";
 import { useSocket } from "../../../providers/useSocket";
 import { useState } from "react";
 
 
 export const FrontiersActionDock = () => {
   const [loading, setLoading] = useState<boolean>(false);
+
+  const matchId = useMatchStore((state) => state.match?.matchId);
   const isTurn = useMatchStore((state) => state.playerId === state.gameState?.turnPlayerId);
   const gamePhase = useMatchStore((state) => state.gameState?.phase);
 
@@ -18,10 +19,10 @@ export const FrontiersActionDock = () => {
     setLoading(true);
 
     try {
-      const rollPayload: FrontiersMove = {
-        kind: "roll"
-      };
-      socket.emit('make_action', rollPayload);
+      socket.emit('make_action', { 
+        matchId: matchId,
+        action: { actionId: "roll" } 
+      });
 
     } finally {
       setLoading(false);

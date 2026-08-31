@@ -52,8 +52,9 @@ export type FrontiersDevelopmentCardConfig = Record<DevCard, number>;
 export interface FrontiersGameState {
   turnPlayerId: number;
   phase: "setup" | "roll" | "build" | "robber";
+  lastRoll: { die1: number; die2: number; total: number } | null;
   board: {
-    hexes: Array<{ q: number; r: number; type: HexType; diceValue: number | null }>;
+    hexes: Array<{ q: number; r: number; type: HexType; resource: Resource | null; diceValue: number | null }>;
     roads: Array<{ playerId: number; q: number; r: number; edge: HexEdge }>;
     buildings: Array<{ playerId: number; type: "settlement" | "city"; q: number; r: number; corner: HexCorner }>;
     ports: Array<{ q: number; r: number; corners: HexEdge; tradeRatio: number; resource: Resource | null }>;

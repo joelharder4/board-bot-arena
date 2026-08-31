@@ -14,7 +14,7 @@ export const SystemPayloadSchema = z.object({
 });
 
 export const ActionPayloadSchema = z.object({
-  // e.g. "build_road", "move_piece", "roll_dice"
+  // e.g. "build_road", "roll"
   actionId: z.string(),
   // e.g. { q: 2, r: 4, type: "road" }
   data: z.record(z.string(), z.unknown()).optional(),
