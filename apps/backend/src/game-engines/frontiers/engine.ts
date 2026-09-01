@@ -127,10 +127,9 @@ export class FrontiersEngine implements IGameEngine {
 
       Object.entries(resourcesGained).forEach(([idString, r]) => {
         const pickupPayload = FrontiersPickupLogSchema.parse({
-          playerId,
+          playerId: parseInt(idString, 10),
           actionId: "pickup",
           data: {
-            playerId: parseInt(idString, 10),
             resources: r,
           }
         });

@@ -37,7 +37,6 @@ export const FrontiersPickupLogSchema = z.object({
   playerId: z.number(),
   actionId: z.literal("pickup"),
   data: z.object({
-    playerId: z.number(),
     resources: z.record(
       z.enum(Resource),
       z.number()
