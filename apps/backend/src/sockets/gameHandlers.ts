@@ -49,7 +49,10 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
   });
 
 
-  socket.on('make_action', async (payload: MakeActionPayload) => {
+  socket.on('make_action', async (
+    payload: MakeActionPayload,
+    callback?: (response: { success: boolean; error?: string }) => void,
+  ) => {
     try {
       const { matchId, action } = payload;
       const userId = socket.data.userId;
@@ -122,9 +125,19 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
         io.to(`match_${matchId}`).emit('game_ended', endPayload);
       }
 
+      if (typeof callback === 'function') {
+        callback({ success: true });
+      }
+
     } catch(e) {
       console.error("Failed to make action: ", e);
-      socket.emit('action_error', { message: e instanceof Error ? e.message : "Invalid move" });
+      const message = e instanceof Error ? e.message : "Invalid move";
+      
+      socket.emit('action_error', { message });
+
+      if (typeof callback === 'function') {
+        callback({ success: false, error: message });
+      }
     }
   });
 };

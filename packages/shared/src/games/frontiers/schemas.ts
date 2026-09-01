@@ -15,9 +15,14 @@ export const FrontiersRollRequestSchema = z.object({
   actionId: z.literal("roll"),
 });
 
+export const FrontiersEndTurnSchema = z.object({
+  actionId: z.literal("end_turn"),
+});
+
 export const FrontiersActionSchema = z.discriminatedUnion("actionId", [
   FrontiersBuildActionSchema,
   FrontiersRollRequestSchema,
+  FrontiersEndTurnSchema,
   // TODO: trade, move robber, etc.
 ]);
 

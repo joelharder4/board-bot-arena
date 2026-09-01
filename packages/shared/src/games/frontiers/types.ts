@@ -51,6 +51,7 @@ export type FrontiersDevelopmentCardConfig = Record<DevCard, number>;
 
 export interface FrontiersGameState {
   turnPlayerId: number;
+  turnOrder: number[];
   phase: "setup" | "roll" | "build" | "robber";
   lastRoll: { die1: number; die2: number; total: number } | null;
   board: {

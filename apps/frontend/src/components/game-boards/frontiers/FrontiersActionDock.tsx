@@ -14,12 +14,14 @@ export const FrontiersActionDock = () => {
 
   const { socket } = useSocket();
 
-  const handleRollDice = () => {
-    if (!socket) return;
+  const buttonsDisabled = loading || !isTurn || gamePhase === "robber";
+
+  const handleRollDice = async () => {
+    if (!socket || !matchId || loading) return;
     setLoading(true);
 
     try {
-      socket.emit('make_action', { 
+      await socket.emitWithAck('make_action', { 
         matchId: matchId,
         action: { actionId: "roll" } 
       });
@@ -29,12 +31,15 @@ export const FrontiersActionDock = () => {
     }
   }
 
-  const handleEndTurn = () => {
-    if (!socket) return;
+  const handleEndTurn = async () => {
+    if (!socket || !matchId || loading) return;
     setLoading(true);
 
     try {
-      // TODO
+      await socket.emitWithAck('make_action', {
+        matchId: matchId,
+        action: { actionId: "end_turn" },
+      });
 
     } finally {
       setLoading(false);
@@ -50,7 +55,7 @@ export const FrontiersActionDock = () => {
           block
           size="large"
           onClick={handleRollDice}
-          disabled={!isTurn || loading}
+          disabled={buttonsDisabled}
         >
           <div className="flex flex-row items-center gap-1.5">
             <GiRollingDices className="text-xl"/>
@@ -64,7 +69,7 @@ export const FrontiersActionDock = () => {
           block
           size="large"
           onClick={handleEndTurn}
-          disabled={!isTurn || loading}
+          disabled={buttonsDisabled}
         >
           End Turn
         </Button>

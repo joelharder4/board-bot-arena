@@ -11,6 +11,26 @@ export class FrontiersEngine implements IGameEngine {
   createInitialState(playerIds: number[]): FrontiersGameState {
     if (playerIds.length < 1 || !playerIds[0]) throw new Error("Not enough players");
 
+    // It cant actually be undefined, its just dumb
+    const shuffledOrder: number[] = [...playerIds];
+    for (let i = shuffledOrder.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffledOrder[i], shuffledOrder[j]] = [shuffledOrder[j]!, shuffledOrder[i]!];
+    }
+
+    const players: Record<number, any> = {};
+    for (const id of shuffledOrder) {
+      players[id] = {
+        resources: { wood: 0, brick: 0, sheep: 0, wheat: 0, ore: 0 },
+        devCards: { knight: 0, monopoly: 0, yearOfPlenty: 0, roadBuilding: 0, victoryPoint: 0 },
+        victoryPoints: 0,
+        knightsPlayed: 0,
+        maxConnectedRoads: 0,
+        largestArmy: false,
+        longestRoad: false,
+      };
+    }
+
     const testBoard = [
       { q: 0, r: 0, type: HexType.DESERT, resource: null, diceValue: null },
       { q: 0, r: -1, type: HexType.FOREST, resource: Resource.WOOD, diceValue: 6 },
@@ -39,6 +59,7 @@ export class FrontiersEngine implements IGameEngine {
 
     return {
        turnPlayerId: playerIds[0],
+       turnOrder: [playerIds[0]],
        phase: "roll",
        lastRoll: null,
        board: {
@@ -48,17 +69,7 @@ export class FrontiersEngine implements IGameEngine {
         ports: [],
         robber: { q: 0, r: 0 }
       },
-       players: Object.fromEntries(
-        playerIds.map((id) => [id, {
-          resources: { wood: 0, brick: 0, sheep: 0, wheat: 0, ore: 0 },
-          devCards: { knight: 0, monopoly: 0, yearOfPlenty: 0, roadBuilding: 0, victoryPoint: 0 },
-          victoryPoints: 0,
-          knightsPlayed: 0,
-          maxConnectedRoads: 0,
-          largestArmy: false,
-          longestRoad: false,
-        }])
-       )
+       players: players
     };
   }
 
@@ -70,6 +81,27 @@ export class FrontiersEngine implements IGameEngine {
 
     if (currentState.turnPlayerId !== playerId) {
       throw new Error("It is not your turn");
+    }
+
+    if (frontiersMove.actionId === "end_turn") {
+      if (currentState.phase !== "build") {
+        throw new Error("You can't end your turn yet");
+      }
+
+      const currentIndex = currentState.turnOrder.indexOf(currentState.turnPlayerId);
+      const nextIndex = (currentIndex + 1) % currentState.turnOrder.length;
+
+      currentState.turnPlayerId = currentState.turnOrder[nextIndex]!;
+      currentState.phase = "roll";
+      currentState.lastRoll = null;
+
+      generatedLogs.push({
+        type: LogType.ACTION,
+        payload: {
+          playerId,
+          actionId: "end_turn",
+        }
+      });
     }
 
     if (frontiersMove.actionId === "build") {
