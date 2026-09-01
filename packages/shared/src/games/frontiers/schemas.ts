@@ -24,6 +24,7 @@ export const FrontiersActionSchema = z.discriminatedUnion("actionId", [
 export type FrontiersMove = z.infer<typeof FrontiersActionSchema>;
 
 export const FrontiersRollLogSchema = z.object({
+  playerId: z.number(),
   actionId: z.literal("roll"),
   data: z.object({
     die1: z.number(),
@@ -33,6 +34,7 @@ export const FrontiersRollLogSchema = z.object({
 });
 
 export const FrontiersPickupLogSchema = z.object({
+  playerId: z.number(),
   actionId: z.literal("pickup"),
   data: z.object({
     playerId: z.number(),

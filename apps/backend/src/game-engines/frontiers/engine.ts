@@ -90,6 +90,7 @@ export class FrontiersEngine implements IGameEngine {
       currentState.lastRoll = { die1, die2, total };
 
       const rollPayload = FrontiersRollLogSchema.parse({
+        playerId,
         actionId: "roll",
         data: { die1, die2, total }
       });
@@ -126,6 +127,7 @@ export class FrontiersEngine implements IGameEngine {
 
       Object.entries(resourcesGained).forEach(([idString, r]) => {
         const pickupPayload = FrontiersPickupLogSchema.parse({
+          playerId,
           actionId: "pickup",
           data: {
             playerId: parseInt(idString, 10),

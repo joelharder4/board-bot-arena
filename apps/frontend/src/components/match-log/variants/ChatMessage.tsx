@@ -1,7 +1,7 @@
-import { TEAM_MAP, type MatchLogEvent } from "@board-bot-arena/shared";
+import { LogType, TEAM_MAP, type MatchLogEvent } from "@board-bot-arena/shared";
 import { useMatchStore } from "../../../services/useMatchStore";
 
-export const ChatMessage = ({ event }: { event: Extract<MatchLogEvent, { type: 'chat' }> }) => {
+export const ChatMessage = ({ event }: { event: Extract<MatchLogEvent, { type: LogType.CHAT }> }) => {
   const teamId = useMatchStore((state) => {
     const player = state.playerList.find((p) => p.type === "user" && p.userId === event.payload.userId);
     return player?.teamId;

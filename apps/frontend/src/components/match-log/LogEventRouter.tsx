@@ -1,6 +1,7 @@
 import type { MatchLogEvent } from "@board-bot-arena/shared";
 import { SystemMessage } from "./variants/SystemMessage";
 import { ChatMessage } from "./variants/ChatMessage";
+import { ActionMessage } from "./variants/ActionMessage";
 
 export const LogEventRouter = ({ event }: { event: MatchLogEvent }) => {
   switch (event.type) {
@@ -9,8 +10,7 @@ export const LogEventRouter = ({ event }: { event: MatchLogEvent }) => {
     case "chat":
       return <ChatMessage event={event} />;
     case "action":
-      // return <ActionMessage event={event} />;
-      return null;
+      return <ActionMessage event={event} />;
     case "trade":
       // return <TradeMessage event={event} />;
       return null;
