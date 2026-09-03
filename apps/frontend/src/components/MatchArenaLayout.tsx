@@ -19,6 +19,7 @@ export default function MatchArenaLayout() {
   const match = useMatchStore((state) => state.match);
   const setMatch = useMatchStore((state) => state.setMatch);
   const setMatchStatus = useMatchStore((state) => state.setMatchStatus);
+  const setPlayerId = useMatchStore((state) => state.setPlayerId);
   const setPlayerList = useMatchStore((state) => state.setPlayerList);
   const appendPlayer = useMatchStore((state) => state.appendPlayer);
   const removePlayer = useMatchStore((state) => state.removePlayer);
@@ -42,6 +43,7 @@ export default function MatchArenaLayout() {
         if (!matchId) return;
         const params: MatchDetailsParams = { matchId }
         const res = await api.get<MatchDetailsResponse>(`/matches/${matchId}`, { params: params });
+        setPlayerId(res.data.playerId);
         setPlayerList(res.data.players);
         setMatchLog(res.data.log);
         setMatch(res.data.match);
@@ -54,7 +56,7 @@ export default function MatchArenaLayout() {
     }
     
     fetchDetails();
-  }, [matchId, setPlayerList, setMatchLog, setGameState, setMatchStatus, setMatch]);
+  }, [matchId, setPlayerList, setMatchLog, setGameState, setMatchStatus, setMatch, setPlayerId]);
 
   useEffect(() => {
     if (!socket) return;

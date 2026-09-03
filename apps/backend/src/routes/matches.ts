@@ -78,6 +78,9 @@ router.get('/:matchId', async (
     res: Response<MatchDetailsResponse | ApiErrorResponse>,
 ) => {
   try {
+    if (!req.user) return res.status(401).json({ error: "User not authenticated" });
+    const userId = req.user.userId;
+
     const matchId = parseInt(req.params.matchId as unknown as string, 10);
     if (isNaN(matchId)) {
       return res.status(400).json({ error: "Invalid matchId format." });
@@ -120,6 +123,9 @@ router.get('/:matchId', async (
       isHost: p.match_player.isHost,
     }));
 
+    const [thisPlayer] = await db.select().from(matchPlayer).where(and(eq(matchPlayer.userId, userId), eq(matchPlayer.matchId, matchId)));
+    if (!thisPlayer) return res.status(404).json({ error: "Player is not in the match" });
+
     const dbLog = await db
       .select()
       .from(matchLog)
@@ -127,7 +133,7 @@ router.get('/:matchId', async (
     
     const log: MatchLogEvent[] = dbLog.map((l) => MatchLogSchema.parse(l));
 
-    res.json({ match: gameMatch, players, log, state: dbMatch.match.state });
+    res.json({ match: gameMatch, playerId: thisPlayer.id, players, log, state: dbMatch.match.state });
   } catch (e) {
     console.error("Creating lobby error:", e);
     return res.status(500).json({ error: "Internal server error" });

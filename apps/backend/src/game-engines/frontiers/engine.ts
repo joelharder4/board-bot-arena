@@ -111,6 +111,85 @@ export class FrontiersEngine implements IGameEngine {
       // ... verify the space is empty ...
       // ... deduct resources and add to currentState.board.buildings ...
     }
+
+    if (frontiersMove.actionId === "move_robber") {
+      if (currentState.phase !== "robber") throw new Error("It is not the robber phase");
+      const { q, r, stealFrom } = frontiersMove.data;
+
+      if (currentState.board.robber.q === q && currentState.board.robber.r === r) {
+        throw new Error("Robber has to move to a different tile");
+      }
+
+      const victims = new Set<number>();
+      const hexCorners = getHexCornerAliases(q, r);
+
+      for (const building of currentState.board.buildings) {
+        if (building.playerId === playerId) continue;
+        if (victims.has(building.playerId)) continue;
+
+        const touching = hexCorners.some((c) => c.q === building.q && c.r === building.r && c.corner === building.corner)
+        if (touching) {
+          const victimState = currentState.players[building.playerId];
+          const totalResources = Object.values(victimState?.resources ?? {}).reduce((sum, val) => sum + val, 0);
+          if (totalResources > 0) victims.add(building.playerId);
+        }
+      }
+
+      let actualTargetId: number | undefined = undefined;
+
+      if (victims.size === 1) {
+        actualTargetId = Array.from(victims)[0];
+      } else if (victims.size > 1) {
+        if (stealFrom !== undefined) {
+          if (!victims.has(stealFrom)) throw new Error("Invalid steal target.");
+          actualTargetId = stealFrom;
+        } else { // steal from random
+          const victimArray = Array.from(victims);
+          actualTargetId = victimArray[Math.floor(Math.random() * victimArray.length)];
+        }
+      }
+      
+      generatedLogs.push({
+        type: LogType.ACTION,
+        payload: {
+          playerId,
+          actionId: "move_robber",
+          data: { q, r }
+        }
+      });
+
+      if (actualTargetId !== undefined) {
+        const targetResources = currentState.players[actualTargetId]?.resources!;
+        const availableCards: Resource[] = [];
+        Object.entries(targetResources).forEach(([res, count]) => {
+          for (let i = 0; i < count; i++) availableCards.push(res as Resource);
+        });
+
+        const targetPlayer = currentState.players[actualTargetId];
+        const activePlayer = currentState.players[playerId];
+
+        if (!targetPlayer || !activePlayer) {
+          throw new Error("Corrupted game state: Player ID not found.");
+        }
+
+        const stolenResource = availableCards[Math.floor(Math.random() * availableCards.length)]!;
+
+        targetPlayer.resources[stolenResource]--;
+        activePlayer.resources[stolenResource]++;
+
+        generatedLogs.push({
+          type: LogType.ACTION,
+          payload: {
+            playerId,
+            actionId: "steal",
+            data: { victimId: actualTargetId }
+          }
+        });
+      }
+
+      currentState.board.robber = { q, r };
+      currentState.phase = "build";
+    }
     
     if (frontiersMove.actionId === "roll") {
       if (currentState.phase !== "roll") throw new Error("It is not the rolling phase");

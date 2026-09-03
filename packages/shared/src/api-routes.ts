@@ -151,6 +151,7 @@ export interface MatchDetailsParams {
 }
 export interface MatchDetailsResponse {
   match: Match;
+  playerId: number;
   players: Array<LobbyPlayer>;
   log: Array<MatchLogEvent>;
   state: any;

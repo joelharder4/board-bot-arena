@@ -57,6 +57,9 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
       const { matchId, action } = payload;
       const userId = socket.data.userId;
 
+      if (!matchId || !action) throw new Error("Malformed payload: Missing matchId or action envelope.");
+      if (!userId) throw new Error("Unauthorized: Missing userId on socket.");
+
       const txResult = await db.transaction(async (tx) => {
         const [dbMatch] = await tx.select().from(match).innerJoin(game, eq(game.id, match.gameId)).where(eq(match.id, matchId));
         const [dbPlayer] = await tx

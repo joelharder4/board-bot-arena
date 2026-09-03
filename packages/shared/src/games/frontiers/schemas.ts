@@ -15,6 +15,15 @@ export const FrontiersRollRequestSchema = z.object({
   actionId: z.literal("roll"),
 });
 
+export const FrontiersMoveRobberSchema = z.object({
+  actionId: z.literal("move_robber"),
+  data: z.object({
+    q: z.number(),
+    r: z.number(),
+    stealFrom: z.number().optional(),
+  }),
+});
+
 export const FrontiersEndTurnSchema = z.object({
   actionId: z.literal("end_turn"),
 });
@@ -22,11 +31,17 @@ export const FrontiersEndTurnSchema = z.object({
 export const FrontiersActionSchema = z.discriminatedUnion("actionId", [
   FrontiersBuildActionSchema,
   FrontiersRollRequestSchema,
+  FrontiersMoveRobberSchema,
   FrontiersEndTurnSchema,
   // TODO: trade, move robber, etc.
 ]);
 
 export type FrontiersMove = z.infer<typeof FrontiersActionSchema>;
+
+
+//////////
+// LOGS //
+//////////
 
 export const FrontiersRollLogSchema = z.object({
   playerId: z.number(),
@@ -46,5 +61,22 @@ export const FrontiersPickupLogSchema = z.object({
       z.enum(Resource),
       z.number()
     ),
+  })
+});
+
+export const FrontiersMoveRobberLogSchema = z.object({
+  playerId: z.number(),
+  actionId: z.literal("move_robber"),
+  data: z.object({
+    q: z.number(),
+    r: z.number(),
+  })
+});
+
+export const FrontiersStealLogSchema = z.object({
+  playerId: z.number(),
+  actionId: z.literal("steal"),
+  data: z.object({
+    victimId: z.number(),
   })
 });
