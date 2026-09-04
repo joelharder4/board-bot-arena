@@ -150,10 +150,12 @@ const FrontiersBoard: React.FC = () => {
 
   const handleCornerClick = (q: number, r: number, corner: HexCorner) => {
     console.log("corner", q, r, corner);
+    setIsBuildingCorner(false);
   }
 
   const handleEdgeClick = (q: number, r: number, edge: HexEdge) => {
     console.log("edge", q, r, edge);
+    setIsBuildingEdge(false);
   }
 
 

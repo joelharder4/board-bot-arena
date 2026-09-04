@@ -1,7 +1,6 @@
 import { FrontiersPickupLogSchema, FrontiersRollLogSchema, LogType, Resource, TEAM_MAP, type MatchLogEvent } from "@board-bot-arena/shared";
 import { useMatchStore } from "../../../services/useMatchStore";
 import { DiceIconD6 } from "../../ui/icons/DiceIconD6";
-import { FrontiersResourceIcon } from "../../ui/icons/FrontiersResourceIcon";
 import { FrontiersCard } from "../../ui/icons/FrontiersCard";
 
 export const ActionMessage = ({ event }: { event: Extract<MatchLogEvent, { type: LogType.ACTION }> }) => {
