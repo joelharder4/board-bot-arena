@@ -41,9 +41,22 @@ export const ActionMessage = ({ event }: { event: Extract<MatchLogEvent, { type:
         <span className={`font-semibold ${nameColourClass}`}>{playerName}</span>
         <span>picked up</span>
 
-        <span className="select-none flex flex-row gap-0.5">
+        <span className="select-none flex flex-row gap-1">
           {Object.entries(pickupLog.data.resources).map(([res, num]) => {
-            return <>{Array(num).fill(null).map(() => <FrontiersCard resource={res as Resource} size="small"/> )}</>;
+            if (num === 0) return <></>;
+            if (num <= 3) return (
+              <div className={`flex flex-row ${num === 2 && "ml-1 mr-1"} ${num === 3 && "ml-2 mr-2"}`}>
+                {Array(num).fill(null).map(() => <FrontiersCard resource={res as Resource} size="small" className="-ml-8 first:m-0 shadow-sm"/> )}
+              </div>
+            );
+            if (num > 3) return (
+              <div key={res} className="relative">
+                <FrontiersCard resource={res as Resource} size="small" className="shadow-sm" />
+                <span className="absolute -top-1.5 -right-2 bg-gray-800 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-lg border border-white z-10 shadow-sm leading-none">
+                  x{num}
+                </span>
+              </div>
+            );
           })}
         </span>
       </div>

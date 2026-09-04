@@ -53,8 +53,8 @@ export class FrontiersEngine implements IGameEngine {
 
     const testBuildings = [
       { playerId: playerIds[0], q: 0, r: 0, corner: HexCorner.N, type: "settlement" as const },
-      { playerId: playerIds[0], q: 0, r: 0, corner: HexCorner.SE, type: "settlement" as const },
-      { playerId: playerIds[0], q: 0, r: 0, corner: HexCorner.SW, type: "city" as const },
+      { playerId: playerIds[0], q: 0, r: 0, corner: HexCorner.SE, type: "city" as const },
+      { playerId: playerIds[0], q: 0, r: 0, corner: HexCorner.SW, type: "settlement" as const },
     ];
 
     return {
@@ -225,6 +225,7 @@ export class FrontiersEngine implements IGameEngine {
         for (const building of currentState.board.buildings) {
           if (aliases.some(v => v.q === building.q && v.r === building.r && v.corner === building.corner)) {
             const amount = building.type === "city" ? 2 : 1;
+            // const amount = Math.floor(Math.random() * 5) + 1;
             const player = currentState.players[building.playerId];
             if (player) {
               player.resources[hex.resource] += amount;

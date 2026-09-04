@@ -56,7 +56,7 @@ const PlayerListContainer: React.FC = () => {
               </div>
 
               <div className="ml-auto flex flex-row items-center">
-                <div className="relative w-8 h-8">
+                <div className="relative w-8 h-8 -mt-1">
                   <FrontiersCard resource={null} size="tiny" className="absolute right-0 top-0.5 rotate-20"/>
                   <FrontiersCard resource={null} size="tiny" className="absolute right-1.5 top-0 -rotate-5"/>
                   <FrontiersCard resource={null} size="tiny" className="absolute right-3 top-0 -rotate-20"/>
