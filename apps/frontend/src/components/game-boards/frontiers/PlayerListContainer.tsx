@@ -6,6 +6,7 @@ import { Skeleton } from "antd";
 import { TrophyOutlined } from "@ant-design/icons";
 import { GiVisoredHelm } from "react-icons/gi";
 import { TbRoad } from "react-icons/tb";
+import { FrontiersCard } from "../../ui/icons/FrontiersCard";
 
 
 const PlayerListContainer: React.FC = () => {
@@ -41,7 +42,7 @@ const PlayerListContainer: React.FC = () => {
         if (!pGame) return null;
 
         return (
-          <div key={p.playerId} className="border-b border-gray-200 h-20 flex flex-col gap-1 p-3">
+          <div key={p.playerId} className="border-b border-gray-200 h-20 flex flex-col gap-1 p-3 text-gray-600">
             <div className="flex flex-row items-center gap-3">
               <div className={`w-8 h-8 rounded-sm ${TEAM_MAP[p.teamId].badgeClass} ${turnPlayerId === p.playerId && "animate-pulse"}`}></div>
               <div className="flex flex-col justify-between">
@@ -51,10 +52,22 @@ const PlayerListContainer: React.FC = () => {
                   {p.type === "bot" && <PlayerTag text="BOT" classes="bg-gray-200 text-gray-900"/>}
                   {p.abandoned && <PlayerTag text="QUIT" classes="bg-red-200 text-red-900"/>}
                 </div>
-                <span className="text-xs text-gray-600">{TEAM_MAP[p.teamId].name} Team</span>
+                <span className="text-xs">{TEAM_MAP[p.teamId].name} Team</span>
               </div>
+
+              <div className="ml-auto flex flex-row items-center">
+                <div className="relative w-8 h-8">
+                  <FrontiersCard resource={null} size="tiny" className="absolute right-0 top-0.5 rotate-20"/>
+                  <FrontiersCard resource={null} size="tiny" className="absolute right-1.5 top-0 -rotate-5"/>
+                  <FrontiersCard resource={null} size="tiny" className="absolute right-3 top-0 -rotate-20"/>
+                </div>
+                <span className="text-sm font-semibold leading-none ml-1">
+                  {Object.values(pGame.resources).reduce((sum, num) => sum + num, 0)}
+                </span>
+              </div>
+              
             </div>
-            {/* TODO: Add card count */}
+            
 
             <div className="mt-auto pt-1 flex flex-row items-center justify-between">
               <div className="flex flex-row items-center gap-1.5 text-yellow-700 px-2 py-0.5">
@@ -62,7 +75,7 @@ const PlayerListContainer: React.FC = () => {
                 <span className="text-sm font-bold leading-none">{pGame.victoryPoints} VP</span>
               </div>
 
-              <div className="flex flex-row items-center gap-3 text-gray-600 font-semibold px-2 py-0.5">
+              <div className="flex flex-row items-center gap-3 font-semibold px-2 py-0.5">
                 <div className="flex flex-row items-center gap-1" title="Knights Played">
                   <GiVisoredHelm className="text-sm"/>
                   <span className="text-sm leading-none">{pGame.knightsPlayed}</span>

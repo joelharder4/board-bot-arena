@@ -2,6 +2,7 @@ import { FrontiersPickupLogSchema, FrontiersRollLogSchema, LogType, Resource, TE
 import { useMatchStore } from "../../../services/useMatchStore";
 import { DiceIconD6 } from "../../ui/icons/DiceIconD6";
 import { FrontiersResourceIcon } from "../../ui/icons/FrontiersResourceIcon";
+import { FrontiersCard } from "../../ui/icons/FrontiersCard";
 
 export const ActionMessage = ({ event }: { event: Extract<MatchLogEvent, { type: LogType.ACTION }> }) => {
   const player = useMatchStore((state) => {
@@ -41,9 +42,9 @@ export const ActionMessage = ({ event }: { event: Extract<MatchLogEvent, { type:
         <span className={`font-semibold ${nameColourClass}`}>{playerName}</span>
         <span>picked up</span>
 
-        <span className="select-none">
+        <span className="select-none flex flex-row gap-0.5">
           {Object.entries(pickupLog.data.resources).map(([res, num]) => {
-            return <>{Array(num).fill(null).map(() => <FrontiersResourceIcon resource={res as Resource} className="text-2xl rounded-lg"/> )}</>;
+            return <>{Array(num).fill(null).map(() => <FrontiersCard resource={res as Resource} size="small"/> )}</>;
           })}
         </span>
       </div>
