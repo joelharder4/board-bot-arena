@@ -6,6 +6,7 @@ import SettlementAsset from "./SettlementAsset";
 import CityAsset from "./CityAsset";
 import { useMemo, useState } from "react";
 import { useSocket } from "../../../providers/useSocket";
+import RobberAsset from "./RobberAsset";
 
 const HEX_SIZE = 50;
 const HEX_SPACING = 2;
@@ -159,10 +160,43 @@ const FrontiersBoard: React.FC = () => {
   }
 
 
+  const getRobberAsset = () => {
+    if (!board?.robber) return <></>;
+
+    const { x, y } = hexToPixel(board.robber.q, board.robber.r, HEX_SIZE);
+    const width = HEX_SIZE * 0.3;
+    const height = HEX_SIZE * 0.7;
+
+    return (<>
+      {isMovingRobber && <g transform={`translate(${BOARD_RADIUS}, -20)`}>
+        <RobberAsset
+          width={width}
+          height={height}
+          x={-width / 2}
+          y={-height / 2}
+          preserveAspectRatio="none"
+          className="text-gray-600 fill-gray-400"
+        />
+      </g>}
+      <g transform={`translate(${x + 25}, ${y - 2})`}>
+        <RobberAsset
+          width={width}
+          height={height}
+          x={-width / 2}
+          y={-height / 2}
+          preserveAspectRatio="none"
+          className={`text-gray-600 fill-gray-400 duration-500 ${isMovingRobber && "opacity-50"}`}
+        />
+      </g>
+    </>);
+  }
+
+  if (!board) return <></>;
+
   return (
     <svg viewBox={`-${BOARD_RADIUS} -${BOARD_RADIUS} ${BOARD_RADIUS * 2} ${BOARD_RADIUS * 2}`} className="w-full h-full">
       <g id="hex-grid">
-        {!!board && board.hexes.map((hex) => {
+        {board.hexes.map((hex) => {
           const { x, y } = hexToPixel(hex.q, hex.r, HEX_SIZE);
           const corners = getHexCorners(x, y, HEX_SIZE);
           const pointsString = corners.map(c => `${c.x},${c.y}`).join(' ');
@@ -194,7 +228,7 @@ const FrontiersBoard: React.FC = () => {
           );
         })}
 
-        {!!board && board.roads.map((road) => {
+        {board.roads.map((road) => {
           const { x, y } = hexToPixel(road.q, road.r, HEX_SIZE);
           const transform = getRoadTransform(x, y, road.edge, HEX_SIZE);
 
@@ -220,7 +254,7 @@ const FrontiersBoard: React.FC = () => {
           );
         })}
 
-        {!!board && board.buildings.map((build) => {
+        {board.buildings.map((build) => {
           const { x, y } = hexToPixel(build.q, build.r, HEX_SIZE);
           const transform = getCornerTransform(x, y, build.corner, HEX_SIZE);
 
@@ -259,6 +293,8 @@ const FrontiersBoard: React.FC = () => {
             </g>
           );
         })}
+
+        {getRobberAsset()}
       </g>
 
       <g id="interaction-layer">
