@@ -7,7 +7,7 @@ const getCardColour = (resource: Resource | null) => {
   switch (resource) {
     case Resource.WOOD: return 'text-green-900 bg-radial from-emerald-500 to-emerald-600';
     case Resource.BRICK: return 'text-red-100 bg-radial from-red-700 to-red-800';
-    case Resource.SHEEP: return 'text-lime-800 bg-radial from-lime-400 to-lime-500';
+    case Resource.SHEEP: return 'text-gray-600 bg-radial from-lime-400 to-lime-500';
     case Resource.WHEAT: return 'text-orange-900 bg-radial from-yellow-400 to-yellow-500';
     case Resource.ORE: return 'text-gray-600 bg-radial from-gray-300 to-gray-400';
     default: return 'text-blue-800 bg-radial from-cyan-400 to-blue-400';
