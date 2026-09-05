@@ -187,7 +187,7 @@ export default function MatchArenaLayout() {
       </header>
 
       <main className="flex-1 flex overflow-hidden p-4 gap-4">
-        <div className={`overflow-hidden whitespace-nowrap shrink-0 flex flex-col border-gray-200 bg-white rounded-md duration-150 w-72 border`}>
+        <div className={`overflow-hidden whitespace-nowrap shrink-0 flex flex-col border-gray-200 bg-white rounded-md duration-200 w-56 lg:w-72 border`}>
           <div className="w-full h-10 rounded-t-md bg-accent items-center flex justify-between px-4 border-b">
 
             <h3 className="text-sm font-semibold">
@@ -212,7 +212,7 @@ export default function MatchArenaLayout() {
           <Outlet />
         </div>
 
-        <aside className="flex flex-col w-80 gap-2 shrink-0">
+        <aside className="flex flex-col duration-200 w-64 lg:w-80 gap-2 shrink-0">
           <div className="overflow-hidden whitespace-nowrap flex flex-col grow border-gray-200 bg-white rounded-md border">
             <div className="w-full h-10 rounded-t-md bg-accent items-center flex justify-between px-4 border-b">
               <h3 className="text-sm font-semibold">
