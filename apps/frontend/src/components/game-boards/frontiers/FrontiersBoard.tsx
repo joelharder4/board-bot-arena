@@ -71,6 +71,7 @@ const getHexColour = (resource: HexType | null) => {
 const FrontiersBoard: React.FC = () => {
   const [isBuildingCorner, setIsBuildingCorner] = useState<boolean>(false);
   const [isBuildingEdge, setIsBuildingEdge] = useState<boolean>(false);
+  const [curBuilding, setCurBuilding] = useState<string>("");
 
   const matchId = useMatchStore((state) => state.match?.matchId);
   const playerList = useMatchStore((state) => state.playerList);
@@ -153,11 +154,32 @@ const FrontiersBoard: React.FC = () => {
   const handleCornerClick = (q: number, r: number, corner: HexCorner) => {
     console.log("corner", q, r, corner);
     setIsBuildingCorner(false);
+    setCurBuilding("");
   }
 
   const handleEdgeClick = (q: number, r: number, edge: HexEdge) => {
     console.log("edge", q, r, edge);
     setIsBuildingEdge(false);
+    setCurBuilding("");
+  }
+
+  const handleBuildRequest = (type: string) => {
+    if (type !== "road" && type !== "settlement" && type !== "city" && type !== "devCard") return;
+    // TODO: do state check on frontend too
+
+    if (type === "road") {
+      setIsBuildingEdge(true);
+      setIsBuildingCorner(false);
+      setCurBuilding(type);
+    }
+    if (type === "city" || type === "settlement") {
+      setIsBuildingEdge(false);
+      setIsBuildingCorner(true);
+      setCurBuilding(type);
+    }
+    if (type === "devCard") {
+      console.log("buy dev card");
+    }
   }
 
 
@@ -302,24 +324,30 @@ const FrontiersBoard: React.FC = () => {
         <g id="interaction-layer">
           {isBuildingCorner &&
             uniqueCornerHitboxes.map((hitbox) => (
+              // TODO: Filter out ones within 2 distance of buildings
               <circle
                 key={`hitbox-${hitbox.q}-${hitbox.r}-${hitbox.corner}`}
                 cx={hitbox.x}
                 cy={hitbox.y}
-                r={12}
-                className="fill-white opacity-0 hover:opacity-20 cursor-pointer transition-opacity"
+                r={10}
+                className="fill-white opacity-20 hover:opacity-30 shadow-md cursor-pointer transition-opacity"
+                stroke="gray"
+                strokeWidth={1}
                 onClick={() => handleCornerClick(hitbox.q, hitbox.r, hitbox.corner)}
               />
             ))
           }
           {isBuildingEdge &&
             uniqueEdgeHitboxes.map((hitbox) => (
+              // TODO: Filter out ones that dont connect to that players existing roads
               <circle
                 key={`hitbox-${hitbox.q}-${hitbox.r}-${hitbox.edge}`}
                 cx={hitbox.x}
                 cy={hitbox.y}
                 r={8}
-                className="fill-white opacity-0 hover:opacity-20 cursor-pointer transition-opacity"
+                className="fill-white opacity-20 hover:opacity-30 shadow-md cursor-pointer transition-opacity"
+                stroke="gray"
+                strokeWidth={1}
                 onClick={() => handleEdgeClick(hitbox.q, hitbox.r, hitbox.edge)}
               />
             ))
@@ -327,7 +355,7 @@ const FrontiersBoard: React.FC = () => {
         </g>
       </svg>
       <div className="absolute right-2 bottom-2 h-1/2">
-        <FrontiersBuildMenu onBuild={() => {}} />
+        <FrontiersBuildMenu onBuild={handleBuildRequest} />
       </div>
     </div>
   );
