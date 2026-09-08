@@ -327,7 +327,7 @@ const FrontiersBoard: React.FC = () => {
         </g>
       </svg>
       <div className="absolute right-2 bottom-2 h-1/2">
-        <FrontiersBuildMenu />
+        <FrontiersBuildMenu onBuild={() => {}} />
       </div>
     </div>
   );
