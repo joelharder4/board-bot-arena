@@ -7,6 +7,7 @@ import CityAsset from "./CityAsset";
 import { useMemo, useState } from "react";
 import { useSocket } from "../../../providers/useSocket";
 import RobberAsset from "./RobberAsset";
+import { FrontiersBuildMenu } from "./FrontiersBuildMenu";
 
 const HEX_SIZE = 50;
 const HEX_SPACING = 2;
@@ -194,136 +195,141 @@ const FrontiersBoard: React.FC = () => {
   if (!board) return <></>;
 
   return (
-    <svg viewBox={`-${BOARD_RADIUS} -${BOARD_RADIUS} ${BOARD_RADIUS * 2} ${BOARD_RADIUS * 2}`} className="w-full h-full">
-      <g id="hex-grid">
-        {board.hexes.map((hex) => {
-          const { x, y } = hexToPixel(hex.q, hex.r, HEX_SIZE);
-          const corners = getHexCorners(x, y, HEX_SIZE);
-          const pointsString = corners.map(c => `${c.x},${c.y}`).join(' ');
+    <div className="w-full h-full relative">
+      <svg viewBox={`-${BOARD_RADIUS} -${BOARD_RADIUS} ${BOARD_RADIUS * 2} ${BOARD_RADIUS * 2}`} className="w-full h-full">
+        <g id="hex-grid">
+          {board.hexes.map((hex) => {
+            const { x, y } = hexToPixel(hex.q, hex.r, HEX_SIZE);
+            const corners = getHexCorners(x, y, HEX_SIZE);
+            const pointsString = corners.map(c => `${c.x},${c.y}`).join(' ');
 
-          return (
-            <g key={`hex-${hex.q}-${hex.r}`} className={`transition-opacity ${isMovingRobber && "hover:opacity-90 cursor-pointer"}`} onClick={() => handleHexClick(hex.q, hex.r, hex.type)}>
-              <polygon
-                points={pointsString}
-                fill={getHexColour(hex.type)}
-                stroke="#222"
-                strokeWidth="2"
-              />
-              
-              {hex.diceValue && (
-                <g>
-                  <circle cx={x} cy={y} r={14} fill="#FFE4B5" stroke="#333" strokeWidth="1"/>
-                  <text
-                    x={x}
-                    y={y}
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                    className={`text-xs font-bold select-none ${hex.diceValue === 6 || hex.diceValue === 8 ? 'fill-red-600' : 'fill-black'}`}
-                  >
-                    {hex.diceValue}
-                  </text>
-                </g>
-              )}
-            </g>
-          );
-        })}
+            return (
+              <g key={`hex-${hex.q}-${hex.r}`} className={`transition-opacity ${isMovingRobber && "hover:opacity-90 cursor-pointer"}`} onClick={() => handleHexClick(hex.q, hex.r, hex.type)}>
+                <polygon
+                  points={pointsString}
+                  fill={getHexColour(hex.type)}
+                  stroke="#222"
+                  strokeWidth="2"
+                />
+                
+                {hex.diceValue && (
+                  <g>
+                    <circle cx={x} cy={y} r={14} fill="#FFE4B5" stroke="#333" strokeWidth="1"/>
+                    <text
+                      x={x}
+                      y={y}
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      className={`text-xs font-bold select-none ${hex.diceValue === 6 || hex.diceValue === 8 ? 'fill-red-600' : 'fill-black'}`}
+                    >
+                      {hex.diceValue}
+                    </text>
+                  </g>
+                )}
+              </g>
+            );
+          })}
 
-        {board.roads.map((road) => {
-          const { x, y } = hexToPixel(road.q, road.r, HEX_SIZE);
-          const transform = getRoadTransform(x, y, road.edge, HEX_SIZE);
+          {board.roads.map((road) => {
+            const { x, y } = hexToPixel(road.q, road.r, HEX_SIZE);
+            const transform = getRoadTransform(x, y, road.edge, HEX_SIZE);
 
-          const roadWidth = HEX_SIZE * 0.9;
-          const roadHeight = HEX_SIZE * 0.15;
+            const roadWidth = HEX_SIZE * 0.9;
+            const roadHeight = HEX_SIZE * 0.15;
 
-          const teamId = playerList[road.playerId]?.teamId ?? 1;
+            const teamId = playerList[road.playerId]?.teamId ?? 1;
 
-          return (
-            <g
-              key={`road-${road.q}-${road.r}-${road.edge}`}
-              transform={`translate(${transform.x}, ${transform.y}) rotate(${transform.rotation})`}
-            >
-              <RoadAsset
-                width={roadWidth}
-                height={roadHeight}
-                x={-roadWidth / 2}
-                y={-roadHeight / 2}
-                preserveAspectRatio="none"
-                className={`${TEAM_MAP[teamId].strokeClass} ${TEAM_MAP[teamId].fillClass}`}
-              />
-            </g>
-          );
-        })}
-
-        {board.buildings.map((build) => {
-          const { x, y } = hexToPixel(build.q, build.r, HEX_SIZE);
-          const transform = getCornerTransform(x, y, build.corner, HEX_SIZE);
-
-          const settlementWidth = HEX_SIZE * 0.4;
-          const settlementHeight = HEX_SIZE * 0.5;
-          const cityWidth = HEX_SIZE * 0.6;
-          const cityHeight = HEX_SIZE * 0.6;
-
-          const teamId = playerList[build.playerId]?.teamId ?? 1;
-
-          return (
-            <g
-              key={`building-${build.q}-${build.r}-${build.corner}`}
-              transform={`translate(${transform.x}, ${transform.y})`}
-            >
-              {build.type === "settlement" && 
-                <SettlementAsset
-                  width={settlementWidth}
-                  height={settlementHeight}
-                  x={-settlementWidth / 2}
-                  y={-settlementHeight * 0.6}
+            return (
+              <g
+                key={`road-${road.q}-${road.r}-${road.edge}`}
+                transform={`translate(${transform.x}, ${transform.y}) rotate(${transform.rotation})`}
+              >
+                <RoadAsset
+                  width={roadWidth}
+                  height={roadHeight}
+                  x={-roadWidth / 2}
+                  y={-roadHeight / 2}
                   preserveAspectRatio="none"
                   className={`${TEAM_MAP[teamId].strokeClass} ${TEAM_MAP[teamId].fillClass}`}
                 />
-              }
-              {build.type === "city" &&
-                <CityAsset
-                  width={cityWidth}
-                  height={cityHeight}
-                  x={-cityWidth / 2}
-                  y={-cityHeight * 0.65}
-                  preserveAspectRatio="none"
-                  className={`${TEAM_MAP[teamId].strokeClass} ${TEAM_MAP[teamId].fillClass}`}
-                />
-              }
-            </g>
-          );
-        })}
+              </g>
+            );
+          })}
 
-        {getRobberAsset()}
-      </g>
+          {board.buildings.map((build) => {
+            const { x, y } = hexToPixel(build.q, build.r, HEX_SIZE);
+            const transform = getCornerTransform(x, y, build.corner, HEX_SIZE);
 
-      <g id="interaction-layer">
-        {isBuildingCorner &&
-          uniqueCornerHitboxes.map((hitbox) => (
-            <circle
-              key={`hitbox-${hitbox.q}-${hitbox.r}-${hitbox.corner}`}
-              cx={hitbox.x}
-              cy={hitbox.y}
-              r={12}
-              className="fill-white opacity-0 hover:opacity-20 cursor-pointer transition-opacity"
-              onClick={() => handleCornerClick(hitbox.q, hitbox.r, hitbox.corner)}
-            />
-          ))
-        }
-        {isBuildingEdge &&
-          uniqueEdgeHitboxes.map((hitbox) => (
-            <circle
-              key={`hitbox-${hitbox.q}-${hitbox.r}-${hitbox.edge}`}
-              cx={hitbox.x}
-              cy={hitbox.y}
-              r={8}
-              className="fill-white opacity-0 hover:opacity-20 cursor-pointer transition-opacity"
-              onClick={() => handleEdgeClick(hitbox.q, hitbox.r, hitbox.edge)}
-            />
-          ))
-        }
-      </g>
-    </svg>
+            const settlementWidth = HEX_SIZE * 0.4;
+            const settlementHeight = HEX_SIZE * 0.5;
+            const cityWidth = HEX_SIZE * 0.6;
+            const cityHeight = HEX_SIZE * 0.6;
+
+            const teamId = playerList[build.playerId]?.teamId ?? 1;
+
+            return (
+              <g
+                key={`building-${build.q}-${build.r}-${build.corner}`}
+                transform={`translate(${transform.x}, ${transform.y})`}
+              >
+                {build.type === "settlement" && 
+                  <SettlementAsset
+                    width={settlementWidth}
+                    height={settlementHeight}
+                    x={-settlementWidth / 2}
+                    y={-settlementHeight * 0.6}
+                    preserveAspectRatio="none"
+                    className={`${TEAM_MAP[teamId].strokeClass} ${TEAM_MAP[teamId].fillClass}`}
+                  />
+                }
+                {build.type === "city" &&
+                  <CityAsset
+                    width={cityWidth}
+                    height={cityHeight}
+                    x={-cityWidth / 2}
+                    y={-cityHeight * 0.65}
+                    preserveAspectRatio="none"
+                    className={`${TEAM_MAP[teamId].strokeClass} ${TEAM_MAP[teamId].fillClass}`}
+                  />
+                }
+              </g>
+            );
+          })}
+
+          {getRobberAsset()}
+        </g>
+
+        <g id="interaction-layer">
+          {isBuildingCorner &&
+            uniqueCornerHitboxes.map((hitbox) => (
+              <circle
+                key={`hitbox-${hitbox.q}-${hitbox.r}-${hitbox.corner}`}
+                cx={hitbox.x}
+                cy={hitbox.y}
+                r={12}
+                className="fill-white opacity-0 hover:opacity-20 cursor-pointer transition-opacity"
+                onClick={() => handleCornerClick(hitbox.q, hitbox.r, hitbox.corner)}
+              />
+            ))
+          }
+          {isBuildingEdge &&
+            uniqueEdgeHitboxes.map((hitbox) => (
+              <circle
+                key={`hitbox-${hitbox.q}-${hitbox.r}-${hitbox.edge}`}
+                cx={hitbox.x}
+                cy={hitbox.y}
+                r={8}
+                className="fill-white opacity-0 hover:opacity-20 cursor-pointer transition-opacity"
+                onClick={() => handleEdgeClick(hitbox.q, hitbox.r, hitbox.edge)}
+              />
+            ))
+          }
+        </g>
+      </svg>
+      <div className="absolute right-2 bottom-2 h-1/2">
+        <FrontiersBuildMenu />
+      </div>
+    </div>
   );
 }
 
